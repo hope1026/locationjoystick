@@ -85,15 +85,17 @@
     <p><strong>Allow only while using the app</strong> and <strong>Ask every time</strong> are not enough for these apps.</p>
 
     <h2 id="spoofed-location-resets">Spoofed location jumps back to your real location</h2>
-    <p>Google's location services can refresh your real position and override the spoof. Change one step at a time, and test after each. Steps run from least to most invasive.</p>
+    <p>Your phone can receive location estimates from several sources. Older releases may keep those estimates out of step.</p>
+    <p>This fork keeps those sources aligned, including Google location features when available. Android still marks the simulated location as mock.</p>
     <ol>
-      <li>Open <strong>Settings → Location</strong>. Set the mode to <strong>GPS only</strong> (or "Device only"), and turn off <strong>Wi-Fi scanning</strong> and <strong>Bluetooth scanning</strong> (under "Improve Accuracy").</li>
-      <li>Confirm no other app holds the mock location slot. See <a href="#another-app-holds-slot">Another app holds the mock location slot</a>.</li>
-      <li>Last resort: in your Google account settings, turn off <strong>Location History</strong> and <strong>Location Sharing</strong>.</li>
-      <li>Last resort: open <strong>Settings → Apps → Google Play Services → Permissions → Location</strong> and set <strong>Don't allow</strong>. Other apps that use Google location may stop working.</li>
-      <li>Last resort: turn off <strong>Find My Device</strong>. You then cannot locate or lock the phone remotely.</li>
+      <li>Use the updated fork build, then stop and restart location simulation.</li>
+      <li>Confirm that your phone selected the app you started. See <a href="#another-app-holds-slot">Another app holds the mock location slot</a>.</li>
+      <li>If the jump returns, note the time, movement mode, and whether the screen was off.</li>
+      <li>For comparison, try <strong>GPS only</strong> or <strong>Device only</strong> under your phone's location settings, if available.</li>
+      <li>You can also compare with <strong>Wi-Fi scanning</strong> and <strong>Bluetooth scanning</strong> turned off. Change one setting at a time.</li>
     </ol>
-    <p><strong>To get your real location back:</strong> Stop spoofing in locationjoystick, undo the settings you changed, and restart the app you want to use.</p>
+    <p>Without Google Play services, simulation still uses your phone's other location sources. If Google synchronization fails, the session stops.</p>
+    <p><strong>To restore your real location:</strong> Stop simulation, restore changed settings, and restart the app you want to use.</p>
 
     <h2 id="overlay-permission-resets">Overlay permission resets on restart</h2>
     <p>The joystick or widget disappears after restarting the phone. This is a known issue on MIUI and ColorOS.</p>

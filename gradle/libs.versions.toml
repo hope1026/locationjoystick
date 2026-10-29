@@ -29,6 +29,7 @@ navigation-compose = "2.7.7"
 
 # Coroutines
 coroutines = "1.7.3"
+play-services-location = "21.3.0"
 
 # Serialization
 kotlinx-serialization-json = "1.6.3"
@@ -69,6 +70,8 @@ kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", versio
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
+google-play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
 
 # AndroidX Core

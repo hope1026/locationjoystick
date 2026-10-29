@@ -82,12 +82,13 @@ def select_device(inventory, requested_serial=None):
 
 
 class Collector:
-    def __init__(self, output, duration=120.0, interval=2.0, serial=None, command_timeout=15.0):
+    def __init__(self, output, duration=120.0, interval=2.0, serial=None, command_timeout=15.0, package=PACKAGE):
         self.output = Path(output)
         self.duration = duration
         self.interval = interval
         self.serial = serial
         self.command_timeout = command_timeout
+        self.package = package
         self.started = time.monotonic()
         self.commands = []
         self.logcat = None
@@ -95,7 +96,7 @@ class Collector:
         self.logcat_files = []
         self.manifest = {
             "schema_version": 1,
-            "package": PACKAGE,
+            "package": package,
             "started_utc": utc_now(),
             "requested_duration_seconds": duration,
             "requested_snapshot_interval_seconds": interval,
@@ -191,7 +192,7 @@ class Collector:
                 continue
             for label, args in [
                 ("location", ["shell", "dumpsys", "location"]),
-                ("services", ["shell", "dumpsys", "activity", "services", PACKAGE]),
+                ("services", ["shell", "dumpsys", "activity", "services", self.package]),
                 ("power", ["shell", "dumpsys", "power"]),
             ]:
                 remaining = deadline - time.monotonic()
@@ -211,7 +212,7 @@ class Collector:
             self.manifest["serial"] = self.serial
             self.manifest["status"] = "collecting"
             for label, args in METADATA_COMMANDS:
-                self.command(label, args)
+                self.command(label, [self.package if arg == PACKAGE else arg for arg in args])
             self.start_logcat()
             self.snapshot_loop()
             self.manifest["status"] = "complete"
@@ -258,6 +259,7 @@ def positive_number(value):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--serial", help="Select an online authorized adb device")
+    parser.add_argument("--package", default=PACKAGE, help="App package (use com.locationjoystick.app.fork for the debug fork)")
     parser.add_argument("--duration", type=positive_number, default=120.0, help="Capture seconds (default: 120)")
     parser.add_argument("--interval", type=positive_number, default=2.0, help="Snapshot seconds (default: 2)")
     parser.add_argument("--command-timeout", type=positive_number, default=15.0, help="Command timeout seconds (default: 15)")
@@ -271,7 +273,7 @@ def main(argv=None):
             output.mkdir(mode=0o700, parents=True, exist_ok=False)
     except OSError as error:
         parser.error(f"Cannot create output directory: {error}")
-    collector = Collector(output, args.duration, args.interval, args.serial, args.command_timeout)
+    collector = Collector(output, args.duration, args.interval, args.serial, args.command_timeout, args.package)
     print(f"Checking device and collecting evidence: {output}", flush=True)
     result = collector.run()
     print(f"Collection {collector.manifest['status']}. Evidence: {output}")

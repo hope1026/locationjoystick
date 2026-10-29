@@ -18,6 +18,8 @@ import android.provider.Settings
 import android.util.Log
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
 import com.locationjoystick.core.common.util.LocaleContextWrapper
@@ -42,15 +44,19 @@ import com.locationjoystick.core.routing.RouteReplayEngine
 import com.locationjoystick.core.routing.RoutingErrorReporter
 import com.locationjoystick.core.routing.TeleportRouteEngine
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -146,6 +152,8 @@ class MockLocationService : Service() {
 
     @Inject lateinit var elevationRepository: ElevationRepository
 
+    @Inject internal lateinit var fusedMockSink: FusedMockLocationSink
+
     private val notificationManager: android.app.NotificationManager by lazy {
         getSystemService(android.app.NotificationManager::class.java)
     }
@@ -193,6 +201,16 @@ class MockLocationService : Service() {
     @Volatile private var currentBearing: Float = 0.0f
 
     @Volatile private var providerAdded = false
+
+    @Volatile private var fusedSessionToken: Long? = null
+
+    private val registeredProviders = mutableSetOf<String>()
+
+    private val providerLock = Any()
+
+    private var lastInjectedFixNanos = Long.MIN_VALUE
+
+    private val providerGeneration = AtomicLong()
 
     /** Realism settings observed from [SettingsRepository] and read each tick in [captureSnapshot]. */
     private val realism = RealismSettingsState()
@@ -301,13 +319,14 @@ class MockLocationService : Service() {
                                 RunningLoopAction.STOP_IDLE_LOOP_FOR_REPLAY -> {
                                     updateJob?.cancel()
                                     updateJob = null
-                                    setupTestProvider()
+                                    prepareTestProviders()
                                     Log.i(TAG, "State changed to RUNNING (route replay) - stopped idle loop")
                                 }
 
                                 RunningLoopAction.START_IDLE_LOOP -> {
-                                    setupTestProvider()
-                                    startUpdateLoop()
+                                    if (prepareTestProviders() && locationRepository.currentMode.value != MockMode.ROUTE_REPLAY) {
+                                        startUpdateLoop()
+                                    }
                                     Log.i(TAG, "State changed to RUNNING - started update loop")
                                 }
 
@@ -316,6 +335,7 @@ class MockLocationService : Service() {
                                 }
                             }
                         }
+                        if (!providerAdded) return@collect
                         if (Settings.canDrawOverlays(this@MockLocationService)) {
                             // Widget overlay is started by the reactive collector below, which also
                             // reacts to getHideWidgetOverlay() flipping mid-session, not just here.
@@ -348,6 +368,10 @@ class MockLocationService : Service() {
                                 }
                             }
                         }
+                        if (state == MockLocationState.ERROR) {
+                            removeTestProvider()
+                            releaseWakeLock()
+                        }
                         stopOverlayServices(
                             computeOverlayStopAction(
                                 OverlayStopTrigger.STATE_IDLE,
@@ -360,7 +384,7 @@ class MockLocationService : Service() {
                         updateJobMutex.withLock {
                             when (computePausedLoopAction(updateJob != null)) {
                                 PausedLoopAction.START_UP -> {
-                                    startUpdateLoop()
+                                    if (prepareTestProviders()) startUpdateLoop()
                                     Log.i(TAG, "State changed to PAUSED - started idle loop to keep position frozen")
                                 }
 
@@ -887,8 +911,11 @@ class MockLocationService : Service() {
         pushInactiveToFollowersIfLeader()
         // Cancel immediately (idempotent); null assignment deferred under mutex so the
         // RUNNING observer can't start a new loop between our cancel and the null write.
-        updateJob?.cancel()
-        serviceScope.launch { updateJobMutex.withLock { updateJob = null } }
+        val stoppedJob = updateJob
+        stoppedJob?.cancel()
+        serviceScope.launch {
+            updateJobMutex.withLock { if (updateJob === stoppedJob) updateJob = null }
+        }
         if (roamingRepository.isRoaming.value) {
             serviceScope.launch { roamingRepository.stopRoaming() }
         }
@@ -1148,57 +1175,87 @@ class MockLocationService : Service() {
 
     private fun handleReplayJumpPrevious() = replayOrchestrator.handleJumpToPreviousWaypoint()
 
-    private fun setupTestProvider() {
-        if (providerAdded) return
-        // Attempt to remove any ghost provider left by a previous crash. If the process was killed
-        // mid-run the provider may still be registered under our package, causing addTestProvider
-        // to throw IllegalArgumentException. Removing first clears the slot safely.
-        try {
-            locationManager.removeTestProvider(LocationManager.GPS_PROVIDER)
-            Log.i(TAG, "Removed stale test provider before re-registering")
-        } catch (_: IllegalArgumentException) {
-            // Not registered — nothing to clear
-        } catch (e: Exception) {
-            Log.w(TAG, "Unexpected error clearing stale test provider", e)
-        }
+    private suspend fun prepareTestProviders(): Boolean =
+        prepareActiveProviders(
+            isActive = { _state.value == MockLocationState.RUNNING || _state.value == MockLocationState.PAUSED },
+            prepare = ::setupTestProvider,
+        )
 
+    private suspend fun setupTestProvider(): Boolean {
+        if (providerAdded) return true
+        val generation = providerGeneration.get()
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val properties =
-                    ProviderProperties
-                        .Builder()
-                        .setHasAltitudeSupport(true)
-                        .setHasSpeedSupport(true)
-                        .setHasBearingSupport(true)
-                        .setPowerUsage(ProviderProperties.POWER_USAGE_HIGH)
-                        .setAccuracy(ProviderProperties.ACCURACY_FINE)
-                        .build()
-
-                locationManager.addTestProvider(
-                    LocationManager.GPS_PROVIDER,
-                    properties,
-                )
-            } else {
-                addLegacyTestProvider()
+            val availability = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this)
+            when (availability) {
+                ConnectionResult.SUCCESS -> {
+                    fusedSessionToken = fusedMockSink.start()
+                    Log.i(TAG, "Fused mock mode enabled")
+                }
+                ConnectionResult.SERVICE_MISSING -> Log.w(TAG, "Google Play services missing; using GPS/network only")
+                else -> error("Google Play services not ready: $availability")
             }
-            locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true)
-            providerAdded = true
-            Log.i(TAG, "Test provider registered")
-        } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Failed to add test provider — another app may hold the slot", e)
-            _state.value = MockLocationState.ERROR
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Missing mock location permission", e)
-            _state.value = MockLocationState.ERROR
+            synchronized(providerLock) {
+                // Stop may arrive while the Fused enable RPC is in flight.
+                if (providerGeneration.get() != generation ||
+                    (_state.value != MockLocationState.RUNNING && _state.value != MockLocationState.PAUSED)
+                ) {
+                    clearFusedMockMode()
+                    return false
+                }
+                for (provider in listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)) {
+                    try {
+                        locationManager.removeTestProvider(provider)
+                    } catch (_: IllegalArgumentException) {
+                        Log.d(TAG, "No stale $provider test provider")
+                    }
+                    addTestProvider(provider)
+                    registeredProviders.add(provider)
+                    locationManager.setTestProviderEnabled(provider, true)
+                }
+                providerAdded = true
+                lastInjectedFixNanos = Long.MIN_VALUE
+                Log.i(TAG, "GPS and network test providers registered")
+            }
+            return true
+        } catch (e: CancellationException) {
+            if (e is TimeoutCancellationException) {
+                failLocationInjection("Timed out enabling Fused mock mode", e)
+            } else {
+                removeTestProvider()
+                currentCoroutineContext().ensureActive()
+                if (e is FusedSessionSupersededException) {
+                    Log.i(TAG, "Mock provider preparation was superseded")
+                } else {
+                    failLocationInjection("Fused mock preparation was cancelled by the API", e)
+                }
+            }
+        } catch (e: Exception) {
+            failLocationInjection("Failed to prepare mock location providers", e)
+        }
+        return false
+    }
+
+    private fun addTestProvider(provider: String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val properties =
+                ProviderProperties
+                    .Builder()
+                    .setHasAltitudeSupport(true)
+                    .setHasSpeedSupport(true)
+                    .setHasBearingSupport(true)
+                    .setPowerUsage(ProviderProperties.POWER_USAGE_HIGH)
+                    .setAccuracy(ProviderProperties.ACCURACY_FINE)
+                    .build()
+            locationManager.addTestProvider(provider, properties)
+        } else {
+            addLegacyTestProvider(provider)
         }
     }
 
-    // Pre-31 devices lack ProviderProperties.Builder + the ProviderProperties addTestProvider
-    // overload — same property values as the API 31+ Builder path above.
     @Suppress("DEPRECATION")
-    private fun addLegacyTestProvider() {
+    private fun addLegacyTestProvider(provider: String) {
         locationManager.addTestProvider(
-            LocationManager.GPS_PROVIDER,
+            provider,
             false,
             false,
             false,
@@ -1212,16 +1269,56 @@ class MockLocationService : Service() {
     }
 
     private fun removeTestProvider() {
-        if (!providerAdded) return
-        try {
-            locationManager.removeTestProvider(LocationManager.GPS_PROVIDER)
+        providerGeneration.incrementAndGet()
+        clearFusedMockMode()
+        synchronized(providerLock) {
             providerAdded = false
-            Log.i(TAG, "Test provider removed")
-        } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Test provider was already removed", e)
-        } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error removing test provider", e)
+            for (provider in registeredProviders.toList()) {
+                try {
+                    locationManager.removeTestProvider(provider)
+                    registeredProviders.remove(provider)
+                } catch (e: IllegalArgumentException) {
+                    registeredProviders.remove(provider)
+                    Log.w(TAG, "Test provider $provider was already removed", e)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to remove $provider test provider", e)
+                }
+            }
         }
+    }
+
+    private fun clearFusedMockMode() {
+        if (!::fusedMockSink.isInitialized) return
+        fusedSessionToken = null
+        val token = fusedMockSink.invalidate()
+        // Cleanup must survive serviceScope cancellation during onDestroy. The operation is bounded
+        // inside the singleton sink; session tokens prevent old cleanup from disabling a new run.
+        val cleanupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        cleanupScope.launch {
+            try {
+                fusedMockSink.stop(token)
+                Log.i(TAG, "Fused mock mode cleared")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to clear Fused mock mode", e)
+            } finally {
+                cleanupScope.cancel()
+            }
+        }
+    }
+
+    private fun failLocationInjection(
+        message: String,
+        error: Exception,
+    ) {
+        Log.e(TAG, message, error)
+        updateJob?.cancel()
+        routeReplayEngine.cancelActiveReplay()
+        teleportRouteEngine.cancelActiveReplay()
+        if (roamingRepository.isRoaming.value) serviceScope.launch { roamingRepository.stopRoaming() }
+        removeTestProvider()
+        releaseWakeLock()
+        locationRepository.stopSpoofing()
+        _state.value = MockLocationState.ERROR
     }
 
     private fun startUpdateLoop() {
@@ -1359,7 +1456,30 @@ class MockLocationService : Service() {
                     this.extras = extras
                 }
             }
-        locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, loc)
+        val token = fusedSessionToken
+        synchronized(providerLock) {
+            if (!providerAdded || nowNanos <= lastInjectedFixNanos) return
+            for (provider in registeredProviders) {
+                val providerLocation = Location(loc).apply { this.provider = provider }
+                locationManager.setTestProviderLocation(provider, providerLocation)
+            }
+            lastInjectedFixNanos = nowNanos
+        }
+        if (token != null) {
+            serviceScope.launch {
+                try {
+                    fusedMockSink.push(token, loc)
+                } catch (e: CancellationException) {
+                    if (e is TimeoutCancellationException || currentCoroutineContext().isActive) {
+                        if (fusedSessionToken == token) failLocationInjection("Timed out pushing Fused mock fix", e)
+                    } else {
+                        throw e
+                    }
+                } catch (e: Exception) {
+                    if (fusedSessionToken == token) failLocationInjection("Failed to push Fused mock fix", e)
+                }
+            }
+        }
     }
 
     /**
@@ -1425,9 +1545,9 @@ class MockLocationService : Service() {
                 )
             }
         } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Failed to push location update", e)
+            failLocationInjection("Failed to push location update", e)
         } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error pushing location update", e)
+            failLocationInjection("Unexpected error pushing location update", e)
         }
     }
 

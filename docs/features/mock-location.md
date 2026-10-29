@@ -1,6 +1,6 @@
 # Mock Location Engine
 
-Injects fake GPS into Android. All apps get spoofed coords as real GPS.
+Publishes Android mock locations to the GPS and network providers, and synchronizes Google Fused when Play services is available. Android's mock-location markers remain intact; this does not bypass mock detection in other apps.
 
 Key files: `:core:location/MockLocationService.kt`, `:core:data/LocationRepository.kt`
 
@@ -15,13 +15,18 @@ Backed by `MapController.isSpoofing` (`StateFlow<Boolean>`, derived from `Locati
 ## Core Mechanics
 
 - Update rate: `AppConstants.LocationConstants.UPDATE_INTERVAL_MS` (1 Hz, real GPS cadence)
+- Build one fix per tick. GPS, network, and Google Fused receive matching coordinates, wall-clock time, and monotonic elapsed realtime for that fix. Each framework location retains its provider name.
+- When Google Play services is available, wait for `setMockMode(true)` to succeed before starting synchronized publication. Submit subsequent fixes through `setMockLocation()` while also updating GPS and network test providers.
+- A device without available Google Play services continues with GPS/network test providers and an explicit diagnostic log. If Play services is available but enabling or writing its mock session fails, fail the session and clean it up; do not silently claim synchronized operation.
 - Teleport (`ACTION_UPDATE_POSITION` with `speedMs == 0`) also pushes one test-provider fix immediately so Maps does not wait for the next tick. Walk/joystick ticks (`speedMs > 0`) stay on the 1 Hz loop.
-- On stop: call `locationManager.removeTestProvider`. Failure = ghost provider, breaks real GPS until reboot.
+- Pause keeps publishing the frozen position to every active provider. The realism suspended phase also keeps publishing; it changes fix content rather than pausing delivery.
+- On stop, park, error, or teardown: invalidate pending writes from that session, disable Google Fused mock mode, and remove the GPS/network test providers registered by the session. Cleanup errors must be logged. A pending old-session write must not re-enable mocking after stop or overwrite a new session.
 
 ## Edge Cases
 
 - Another app holds mock slot → `addTestProvider` throws `IllegalArgumentException`. Catch, show clear error.
 - `elapsedRealtimeNanos` must be monotonically increasing. Never fixed value.
+- Bound Fused API waits so an unresponsive location service cannot stall start or cleanup indefinitely. Preserve cancellation, and attempt mock-mode cleanup after a failed or cancelled enable.
 - `accuracy` below `1.0f` triggers anti-cheat. Stay within `AppConstants.JitterConstants.ACCURACY_MIN`–`AppConstants.JitterConstants.ACCURACY_MAX`.
 
 ## Internal Architecture
@@ -30,7 +35,9 @@ Each tick, `captureSnapshot()` reads all `@Volatile` fields into immutable `Loca
 
 Pure function `buildLocation(state, nowMs, random)` takes snapshot, returns `LocationFix` — always non-null; the suspended-phase window reports a stationary, unjittered fix rather than skipping the push (see "Suspended mocking" below). No Android imports — `Random` injected for deterministic tests.
 
-`applyToProvider(fix, nowNanos)` translates `LocationFix` → `android.location.Location`, pushes to `LocationManager`. Receives captured `nowNanos` to guarantee monotonic `elapsedRealtimeNanos` consistent with the position computed in `buildLocation`.
+`applyToProvider(fix, nowNanos)` translates `LocationFix` → `android.location.Location`, then publishes matching fixes to the active framework providers and Fused mock session. It receives captured `nowNanos` so provider timestamps agree with the position computed in `buildLocation`. Fused lifecycle operations and writes are serialized; session invalidation prevents queued work from an old session surviving stop/restart.
+
+The Fused integration addresses the Note8 observation recorded in [the investigation](../research/2026-10-29-note8-location-snapback.md): GPS mock updates continued while Fused briefly reported a network-derived coordinate about 1.3 km away. Validation must inspect provider outputs on the device; an unchanged internal map marker alone does not prove other location consumers receive the same position. Adding synchronized writes is not, by itself, evidence that every device or consumer is fixed.
 
 Suspended-phase state is held in `AtomicReference<SuspendedPhaseState>` (an `internal data class(isActive, startMs)`). Transitions are computed by `advanceSuspendedPhase(current, now, enabled, mode, random)` — a pure function extracted to `:core:location` top-level for direct unit testing (see `SuspendedPhaseTest`).
 

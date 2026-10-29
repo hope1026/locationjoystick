@@ -53,6 +53,9 @@ debugging authorized and reproduce the issue while running:
 python3 scripts/collect-location-diagnostics.py --duration 120 --interval 2
 ```
 
+For the separate debug fork, add `--package com.locationjoystick.app.fork`.
+It installs as **locationjoystick Fused** and keeps the original app's data separate.
+
 Use `--serial SERIAL` when more than one device is connected. The collector reads device
 and app metadata, streams filtered logs, and takes timestamped location, service,
 and screen-power snapshots. It does not change settings or install, start, or stop the app. Evidence goes

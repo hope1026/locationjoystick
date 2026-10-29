@@ -145,6 +145,24 @@ class DiagnosticsTest(unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(Exception):
                 diagnostics.positive_number(value)
 
+    def test_fork_package_is_used_for_metadata_and_service_queries(self):
+        commands = []
+        def respond(command, **kwargs):
+            commands.append(command)
+            output = "phone\tdevice\n" if command[1:] == ["devices", "-l"] else ""
+            return subprocess.CompletedProcess(command, 0, output, "")
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(diagnostics.subprocess, "run", side_effect=respond), \
+                patch.object(diagnostics.subprocess, "Popen") as popen:
+            popen.return_value.poll.return_value = None
+            popen.return_value.returncode = -15
+            collector = diagnostics.Collector(folder, duration=0.01, package="com.locationjoystick.app.fork")
+            self.assertEqual(0, collector.run())
+            self.assertEqual("com.locationjoystick.app.fork", collector.manifest["package"])
+            self.assertTrue(any("services" in cmd and cmd[-1] == "com.locationjoystick.app.fork" for cmd in commands))
+            self.assertTrue(any("package" in cmd and cmd[-1] == "com.locationjoystick.app.fork" for cmd in commands))
+            self.assertFalse(any(diagnostics.PACKAGE in cmd for cmd in commands))
+
 
 if __name__ == "__main__":
     unittest.main()

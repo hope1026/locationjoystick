@@ -14,6 +14,12 @@ android {
         applicationId = "com.locationjoystick.app"
         testInstrumentationRunner = "com.locationjoystick.app.HiltTestRunner"
     }
+    buildTypes {
+        debug {
+            applicationIdSuffix = ".fork"
+            versionNameSuffix = "-fused-fork"
+        }
+    }
     androidResources {
         generateLocaleConfig = true
     }
@@ -91,6 +97,8 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.kotlinx.coroutines.play.services)
+    androidTestImplementation(libs.google.play.services.location)
     androidTestImplementation(libs.room.runtime)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

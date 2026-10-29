@@ -1,12 +1,12 @@
 # Technical Constraints
 
 - Min SDK API 28. `MockLocationService.setupTestProvider()` gates on `Build.VERSION.SDK_INT >= Build.VERSION_CODES.S`: the `ProviderProperties.Builder()` path on API 31+, the deprecated raw-arg `addTestProvider` overload (`@Suppress("DEPRECATION")`) below it. Compass orientation tracking (see docs/features/tap-to-walk.md) requires API 30 (`takeScreenshot`) with no fallback — its Settings row, onboarding step and `CompassAccessibilityService` binding are gated on `Build.VERSION.SDK_INT >= Build.VERSION_CODES.R`, and the service is disabled in the manifest below API 30 (`@bool/compass_accessibility_service_enabled`, overridden in `values-v30/`), so it is unavailable on API 28–29.
-- No Play Services. MapLibre, not Google Maps. No Firebase.
+- MapLibre, not Google Maps. No Firebase. This fork uses Google Play services location APIs only to keep Fused mock locations aligned with GPS and network test providers. Devices without available Play services retain GPS/network mocking and log that Fused synchronization is unavailable. When Play services is available, a permission or API failure stops the session instead of silently reporting a successful synchronized start. The user authorized this exception to the upstream's no-Play-services policy on 2026-10-29.
 - Offline-first. Core features work without internet. OSRM opt-in, degrades gracefully.
 - No `Thread.sleep()`. Use `delay()` in coroutines.
 - No empty catch blocks. Every `catch` must log or handle.
 - No `GlobalScope`. Use `viewModelScope`, `lifecycleScope`, or scoped `CoroutineScope`.
 - No memory leaks. Every `WindowManager.addView` needs matching `removeView` in `onDestroy`. Every scope cancelled in `onDestroy`/`onCleared`.
-- Location updates at 1 Hz.
+- Location updates at 1 Hz. Build one fix per tick and publish matching coordinates and timestamps to GPS, network, and, when available, Google Fused. Enter Fused mock mode before publishing a synchronized session; continue frozen fixes during pause. On stop or teardown, invalidate pending session writes, disable Fused mock mode, and remove registered test providers. Android's mock-location markers remain intact.
 - Battery: use `IMPORTANCE_LOW` notification channel. Wake locks used only when necessary for essential background operations. `MockLocationService` holds `PARTIAL_WAKE_LOCK` while spoofing is active (state != IDLE) — foreground service alone doesn't guarantee the `delay()`-based update loop fires reliably under Doze/Adaptive Battery throttling on some devices (e.g. Android 15 Pixel) once the screen locks. Released on stop/idle/onDestroy.
 - OSM tiles require an identifying `User-Agent` and MapLibre's per-host download cap. The full required recipe (install path, interceptor replace, R8 keeps, cache wipe, 20 requests/host, overlay TextureView) is docs/features/map-tiles.md. Do not invent a second `MapLibre.getInstance` / `MapView` path.

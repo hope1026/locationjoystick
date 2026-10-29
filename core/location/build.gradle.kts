@@ -25,6 +25,8 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.google.play.services.location)
     implementation(libs.okhttp)
     implementation(libs.bundles.lifecycle)
     implementation(libs.hilt.navigation.compose)
