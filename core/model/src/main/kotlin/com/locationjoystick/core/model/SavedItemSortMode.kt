@@ -5,6 +5,9 @@ enum class SavedItemSortMode {
     NAME_DESCENDING,
     NEWEST_FIRST,
     OLDEST_FIRST,
+
+    /** Route-only manual display order; favorites do not offer this mode. */
+    CUSTOM,
 }
 
 fun <T : HasCreatedAt> List<T>.sortedBySavedItemMode(
@@ -16,4 +19,5 @@ fun <T : HasCreatedAt> List<T>.sortedBySavedItemMode(
         SavedItemSortMode.NAME_DESCENDING -> sortedWith(compareByDescending(String.CASE_INSENSITIVE_ORDER, nameOf))
         SavedItemSortMode.NEWEST_FIRST -> sortedByDescending { it.createdAt }
         SavedItemSortMode.OLDEST_FIRST -> sortedBy { it.createdAt }
+        SavedItemSortMode.CUSTOM -> this
     }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="route_waypoint_count">
+        <item quantity="other">%1$d 个途经点</item>
+    </plurals>
+</resources>

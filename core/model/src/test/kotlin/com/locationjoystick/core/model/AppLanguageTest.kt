@@ -5,6 +5,13 @@ import org.junit.Test
 
 class AppLanguageTest {
     @Test
+    fun `Korean language and regional tags select KOREAN`() {
+        assertEquals(AppLanguage.KOREAN, AppLanguage.fromTag("ko"))
+        assertEquals(AppLanguage.KOREAN, AppLanguage.fromTag("ko-KR"))
+        assertEquals(AppLanguage.KOREAN, AppLanguage.fromTag("KO-kr"))
+    }
+
+    @Test
     fun `fromTag en returns ENGLISH`() {
         assertEquals(AppLanguage.ENGLISH, AppLanguage.fromTag("en"))
     }

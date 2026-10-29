@@ -9,11 +9,14 @@ enum class AppLanguage(
 ) {
     SYSTEM_DEFAULT(null),
     ENGLISH("en"),
+    KOREAN("ko"),
     CHINESE_SIMPLIFIED("zh-CN"),
     CHINESE_TRADITIONAL("zh-TW"),
     ;
 
     companion object {
-        fun fromTag(tag: String?): AppLanguage = entries.firstOrNull { it.languageTag == tag } ?: SYSTEM_DEFAULT
+        fun fromTag(tag: String?): AppLanguage =
+            entries.firstOrNull { it.languageTag == tag }
+                ?: if (tag?.substringBefore('-').equals("ko", ignoreCase = true)) KOREAN else SYSTEM_DEFAULT
     }
 }

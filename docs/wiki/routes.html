@@ -39,10 +39,23 @@
       <ul class="section-bullets">
         <li>Tap a saved route to start it. You walk to the first stop, then playback follows the path.</li>
         <li>Search by name with the search box.</li>
-        <li>Sort routes A–Z, Z–A, newest, or oldest.</li>
+        <li>Sort routes A–Z, Z–A, newest, oldest, or in your own order.</li>
         <li>While a route plays, a count shows your current stop out of the total.</li>
         <li>The three-dot menu lets you edit, share, export, or delete a route. Share copies every stop as a line of coordinates.</li>
       </ul>
+      <h3 class="item" id="routes-list-custom-order">Custom order</h3>
+      <ol>
+        <li>Open <strong>Sort</strong> and choose <strong>Custom order</strong>.</li>
+        <li>Press and hold a route's drag handle, then move it up or down.</li>
+        <li>Release it to save its new position.</li>
+      </ol>
+      <p>Clear the search box before dragging routes.</p>
+      <p>The first time you choose Custom order, routes keep their current positions.</p>
+      <p>Your custom order stays after closing the app. Choosing another sort keeps that saved order.</p>
+      <p>Choose Custom order again to restore it.</p>
+      <p>The map and widget show the same saved order. Reorder routes from the main Routes list.</p>
+      <p>New routes join the end. Renaming a route keeps its position.</p>
+      <p>Deleting a route keeps the other routes in their saved order.</p>
     </section>
 
     <section class="has-shot">
@@ -152,16 +165,19 @@
     <aside class="shot" id="route-detail-shot">
       <img class="phone-shot" src="screenshots/10_route_detail.png" alt="Route detail / edit screen">
     </aside>
-    <p>Rename a route, reorder or remove stops, or change how it moves between stops.</p>
+    <p>Change a route's name, speed, or saved stops.</p>
 
       <ul class="section-bullets">
-        <li>Drag stops to reorder them.</li>
-        <li>Tap a stop to highlight it on the map.</li>
+        <li>Use a stop's edit button to move it on the map. This works for every route type.</li>
+        <li>The map starts at that stop and shows the route around it. Tap the new position, then <strong>Save</strong>.</li>
+        <li><strong>Cancel</strong> or Back keeps the saved position. Other stops, their order, and their wait times stay unchanged.</li>
+        <li>Save stays unavailable while saving. If saving fails, the map stays open so you can try again.</li>
+        <li>Your route-name draft and place in the stop list stay unchanged when you return.</li>
+        <li>Saved changes apply the next time you start the route. A route already playing keeps its current path.</li>
+        <li>Use the delete button beside a stop to remove it.</li>
         <li>Choose the speed for this route here. Choose "None" to use the current speed. Hidden for teleport routes.</li>
         <li>On a teleport route, edit the wait time for each stop, or set one wait time for all stops.</li>
-        <li>On a teleport route, "Randomize order" jumps between stops in a random order. A looping route picks a new order each time it restarts.</li>
-        <li>If you change a route from straight to road-following, the app loads the roads the next time you start it.</li>
-        <li>Delete the route from the action bar. This cannot be undone.</li>
+        <li>On a teleport route, "Randomize order" jumps between stops in a random order. Looping picks a new order at each restart.</li>
       </ul>
     </section>
 

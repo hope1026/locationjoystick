@@ -96,6 +96,38 @@ class SettingsViewModelSaveTest {
     }
 
     @Test
+    fun `saving unrelated settings preserves the custom route order`() =
+        runTest(testDispatcher) {
+            fakeSettingsRepo.enableCustomRouteOrder(listOf("b", "a"))
+            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            viewModel.userFeedback.test {
+                viewModel.setSpeed("walk", 2.0)
+                viewModel.saveChanges()
+                assertFalse(awaitItem().isError)
+                cancelAndIgnoreRemainingEvents()
+            }
+            assertEquals(listOf("b", "a"), fakeDataSource.lastAppliedSnapshot!!.customRouteOrder)
+            assertEquals(listOf("b", "a"), fakeSettingsRepo.getCustomRouteOrder().first())
+        }
+
+    @Test
+    fun `import restores custom route order and mode`() =
+        runTest(testDispatcher) {
+            viewModel.userFeedback.test {
+                viewModel.importSettings(
+                    ExportData(
+                        customRouteOrder = listOf("b", "a"),
+                        routesSortMode = com.locationjoystick.core.model.SavedItemSortMode.CUSTOM,
+                    ),
+                )
+                assertFalse(awaitItem().isError)
+                cancelAndIgnoreRemainingEvents()
+            }
+            assertEquals(listOf("b", "a"), fakeSettingsRepo.getCustomRouteOrder().first())
+            assertEquals(com.locationjoystick.core.model.SavedItemSortMode.CUSTOM, fakeSettingsRepo.getRoutesSortMode().first())
+        }
+
+    @Test
     fun `saveChanges triggers exactly one applySnapshot call`() =
         runTest(testDispatcher) {
             viewModel.setSpeed("walk", 2.0)
@@ -425,6 +457,20 @@ class SettingsViewModelSaveTest {
 // ---------------------------------------------------------------------------
 
 internal class SaveTestPreferencesDataSource : PreferencesDataSource {
+    private val customRouteOrderFlow = MutableStateFlow<List<String>>(emptyList())
+    private val routesSortModeFlow = MutableStateFlow(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
+
+    override fun getCustomRouteOrder(): Flow<List<String>> = customRouteOrderFlow
+
+    override suspend fun setCustomRouteOrder(ids: List<String>) {
+        customRouteOrderFlow.value = ids.filter { it.isNotBlank() }.distinct()
+    }
+
+    override suspend fun enableCustomRouteOrder(initialIds: List<String>) {
+        if (customRouteOrderFlow.value.isEmpty()) setCustomRouteOrder(initialIds)
+        setRoutesSortMode(com.locationjoystick.core.model.SavedItemSortMode.CUSTOM)
+    }
+
     var applySnapshotCallCount = 0
     var lastAppliedSnapshot: SettingsSnapshot? = null
     var shouldThrowOnApplySnapshot = false
@@ -456,6 +502,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override fun getSettingsSnapshot(): Flow<SettingsSnapshot> =
         MutableStateFlow(
             SettingsSnapshot(
+                customRouteOrder = customRouteOrderFlow.value,
                 slowWalkSpeedMs = speedProfilesFlow.value.slowWalkSpeedMs,
                 walkSpeedMs = speedProfilesFlow.value.walkSpeedMs,
                 runSpeedMs = speedProfilesFlow.value.runSpeedMs,
@@ -488,6 +535,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
         if (shouldThrowOnApplySnapshot) throw RuntimeException("Simulated DataStore failure")
+        customRouteOrderFlow.value = snapshot.customRouteOrder
         applySnapshotCallCount++
         lastAppliedSnapshot = snapshot
         speedProfilesFlow.value =
@@ -651,6 +699,12 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
         lon: Double,
     ) = Unit
 
+    override fun getRoutesSortMode(): Flow<com.locationjoystick.core.model.SavedItemSortMode> = routesSortModeFlow
+
+    override suspend fun setRoutesSortMode(mode: com.locationjoystick.core.model.SavedItemSortMode) {
+        routesSortModeFlow.value = mode
+    }
+
     override fun getRoutesSortNewestFirst(): Flow<Boolean> = flowOf(true)
 
     override suspend fun setRoutesSortNewestFirst(newestFirst: Boolean) = Unit
@@ -758,6 +812,8 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun clearAllExceptOnboarding() {
         clearAllExceptOnboardingCallCount++
+        customRouteOrderFlow.value = emptyList()
+        routesSortModeFlow.value = com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST
     }
 
     override fun getUpdateCheckLastCheckedAtMs(): Flow<Long> = flowOf(0L)

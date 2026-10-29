@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="notification_channel_name_active">모의 위치</string>
+    <string name="notification_channel_desc_active">모의 위치가 실행 중일 때 사용합니다</string>
+    <string name="notification_channel_name_active_minimized">모의 위치 (최소화)</string>
+    <string name="notification_channel_desc_active_minimized">모의 위치 실행 중 사용하며 상태 표시줄에서는 숨깁니다</string>
+    <string name="notification_channel_name_permission_error">권한 오류</string>
+    <string name="notification_channel_desc_permission_error">필수 권한이 없을 때 표시합니다</string>
+    <string name="notification_title_permission_error">필수 권한이 없습니다</string>
+    <string name="notification_text_permission_error">모의 위치를 시작하려면 앱을 열어 설정을 완료하세요.</string>
+    <string name="notification_title_active">모의 위치 사용 중</string>
+    <string name="notification_text_active">locationjoystick이 모의 GPS 위치를 전송하고 있습니다</string>
+    <string name="notification_action_stop">중지</string>
+    <string name="notification_action_map">지도</string>
+    <string name="notification_action_favorites">즐겨찾기</string>
+    <string name="notification_action_pause">일시정지</string>
+    <string name="notification_action_resume">계속</string>
+    <string name="walk_to_start_fallback_message">%1$s — 경로 시작점까지 직선으로 걷습니다</string>
+    <string name="walk_via_roads_fallback_message">%1$s — 직선으로 걷습니다</string>
+    <string name="ephemeral_replay_fallback_message">%1$s — 경로 일부를 직선으로 이동합니다</string>
+</resources>

@@ -22,6 +22,7 @@ import com.locationjoystick.core.model.RoamingKind
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.normalizeCustomRouteOrder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -301,10 +302,20 @@ interface PreferencesDataSource {
 
     suspend fun setRoutesSortMode(mode: SavedItemSortMode) = setRoutesSortNewestFirst(mode != SavedItemSortMode.OLDEST_FIRST)
 
+    fun getCustomRouteOrder(): Flow<List<String>>
+
+    suspend fun setCustomRouteOrder(ids: List<String>)
+
+    /** First selection keeps the current visible order; later selections restore the saved order. */
+    suspend fun enableCustomRouteOrder(initialIds: List<String>)
+
     fun getFavoritesSortMode(): Flow<SavedItemSortMode> =
         getFavoritesSortNewestFirst().map { if (it) SavedItemSortMode.NEWEST_FIRST else SavedItemSortMode.OLDEST_FIRST }
 
-    suspend fun setFavoritesSortMode(mode: SavedItemSortMode) = setFavoritesSortNewestFirst(mode != SavedItemSortMode.OLDEST_FIRST)
+    suspend fun setFavoritesSortMode(mode: SavedItemSortMode) {
+        require(mode != SavedItemSortMode.CUSTOM) { "Custom display order is supported for routes only" }
+        setFavoritesSortNewestFirst(mode != SavedItemSortMode.OLDEST_FIRST)
+    }
 
     /** Gets the GPS jitter idle speed variation percentage (0 = off). */
     fun getJitterSpeedIdleVariationPct(): Flow<Int>
@@ -420,6 +431,7 @@ data class SettingsSnapshot(
     val altitudeOverrideButtonEnabled: Boolean = false,
     val debugStatsEnabled: Boolean = false,
     val jitterSpeedIdleWobbleProbabilityPct: Int = AppConstants.JitterConstants.SPEED_IDLE_WOBBLE_PROBABILITY_PCT_DEFAULT,
+    val customRouteOrder: List<String> = emptyList(),
 )
 
 fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
@@ -582,6 +594,7 @@ class AppPreferencesDataSource
             val ROUTES_SORT_NEWEST_FIRST = booleanPreferencesKey("routes_sort_newest_first")
             val FAVORITES_SORT_NEWEST_FIRST = booleanPreferencesKey("favorites_sort_newest_first")
             val ROUTES_SORT_MODE = stringPreferencesKey("routes_sort_mode")
+            val CUSTOM_ROUTE_ORDER = stringPreferencesKey("custom_route_order")
             val FAVORITES_SORT_MODE = stringPreferencesKey("favorites_sort_mode")
             val JITTER_SPEED_IDLE_VARIATION_PCT = intPreferencesKey("jitter_speed_idle_variation_pct")
             val JITTER_SPEED_MOVING_VARIATION_PCT = intPreferencesKey("jitter_speed_moving_variation_pct")
@@ -1022,9 +1035,26 @@ class AppPreferencesDataSource
             }
         }
 
+        override fun getCustomRouteOrder(): Flow<List<String>> =
+            dataStore.data.map { prefs -> parseCustomRouteOrder(prefs[Keys.CUSTOM_ROUTE_ORDER]) }
+
+        override suspend fun setCustomRouteOrder(ids: List<String>) {
+            setPref(Keys.CUSTOM_ROUTE_ORDER, JSONArray(normalizeCustomRouteOrder(ids)).toString())
+        }
+
+        override suspend fun enableCustomRouteOrder(initialIds: List<String>) {
+            dataStore.edit { prefs ->
+                if (parseCustomRouteOrder(prefs[Keys.CUSTOM_ROUTE_ORDER]).isEmpty()) {
+                    prefs[Keys.CUSTOM_ROUTE_ORDER] = JSONArray(normalizeCustomRouteOrder(initialIds)).toString()
+                }
+                prefs[Keys.ROUTES_SORT_MODE] = SavedItemSortMode.CUSTOM.name
+                prefs[Keys.ROUTES_SORT_NEWEST_FIRST] = true
+            }
+        }
+
         override fun getFavoritesSortMode(): Flow<SavedItemSortMode> =
             dataStore.data.map { prefs ->
-                prefs[Keys.FAVORITES_SORT_MODE]?.let(::savedItemSortModeOrNull)
+                prefs[Keys.FAVORITES_SORT_MODE]?.let(::savedItemSortModeOrNull)?.takeUnless { it == SavedItemSortMode.CUSTOM }
                     ?: if (prefs[Keys.FAVORITES_SORT_NEWEST_FIRST] != false) {
                         SavedItemSortMode.NEWEST_FIRST
                     } else {
@@ -1033,6 +1063,7 @@ class AppPreferencesDataSource
             }
 
         override suspend fun setFavoritesSortMode(mode: SavedItemSortMode) {
+            require(mode != SavedItemSortMode.CUSTOM) { "Custom display order is supported for routes only" }
             dataStore.edit { prefs ->
                 prefs[Keys.FAVORITES_SORT_MODE] = mode.name
                 prefs[Keys.FAVORITES_SORT_NEWEST_FIRST] = mode != SavedItemSortMode.OLDEST_FIRST
@@ -1120,6 +1151,7 @@ class AppPreferencesDataSource
                 prefs[Keys.MAP_FAB_ITEMS] = snapshot.enabledMapFeatures.map { it.name.lowercase() }.toSet()
                 prefs[Keys.MAP_FAB_SEEN_DEFAULTS] = DEFAULT_MAP_FAB_ITEMS
                 prefs[Keys.FEATURE_ORDER] = snapshot.featureOrder.serializeFeatureOrder()
+                prefs[Keys.CUSTOM_ROUTE_ORDER] = JSONArray(normalizeCustomRouteOrder(snapshot.customRouteOrder)).toString()
                 prefs[Keys.ENABLED_SPEED_PROFILE_IDS] = snapshot.enabledSpeedProfileIds
                 prefs[Keys.REMEMBER_LAST_LOCATION] = snapshot.rememberLastLocation
                 prefs[Keys.MAP_FOLLOWS_LOCATION] = snapshot.mapFollowsLocation
@@ -1211,6 +1243,7 @@ class AppPreferencesDataSource
                         driveSpeedMs = prefs[Keys.DRIVE_SPEED_MS] ?: DEFAULT_DRIVE_SPEED_MS,
                         speedUnit = speedUnit,
                         featureOrder = parseFeatureOrder(prefs[Keys.FEATURE_ORDER]),
+                        customRouteOrder = parseCustomRouteOrder(prefs[Keys.CUSTOM_ROUTE_ORDER]),
                         enabledWidgetFeatures = widgetItems.mapNotNull { it.toAppFeature() }.toSet(),
                         enabledMapFeatures = mapItems.mapNotNull { it.toAppFeature() }.toSet(),
                         enabledSpeedProfileIds =
@@ -1398,3 +1431,19 @@ data class SpeedProfilePreferences(
     val slowWalkSpeedMs: Double = AppConstants.ProfileConstants.SLOW_WALK_SPEED_MPS,
     val driveSpeedMs: Double = AppConstants.ProfileConstants.DRIVE_SPEED_MPS,
 )
+
+/** Invalid or old stored data falls back to an empty order; live routes still display deterministically. */
+private fun parseCustomRouteOrder(raw: String?): List<String> {
+    if (raw == null) return emptyList()
+    return try {
+        val array = JSONArray(raw)
+        normalizeCustomRouteOrder(
+            (0 until array.length()).map { index ->
+                array.get(index) as? String ?: return emptyList()
+            },
+        )
+    } catch (error: org.json.JSONException) {
+        Log.e("AppPreferencesDataSource", "Invalid custom route order", error)
+        emptyList()
+    }
+}

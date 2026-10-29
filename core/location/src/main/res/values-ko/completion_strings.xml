@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="route_complete_message">경로 이동을 완료했습니다</string>
+</resources>

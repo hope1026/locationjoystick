@@ -445,7 +445,15 @@ internal class WidgetPanelPresenter(
                 onShareOpened = { hidePanelView() },
                 hideTeleport = hideTeleportFeatures,
                 sortMode = sortMode,
-                onSortModeSelected = { mode -> serviceScope.launch { settingsRepository.setRoutesSortMode(mode) } },
+                onSortModeSelected = { mode ->
+                    serviceScope.launch {
+                        if (mode == com.locationjoystick.core.model.SavedItemSortMode.CUSTOM) {
+                            settingsRepository.enableCustomRouteOrder(routes.map { it.id })
+                        } else {
+                            settingsRepository.setRoutesSortMode(mode)
+                        }
+                    }
+                },
             )
         }
     }

@@ -64,7 +64,7 @@
     <string name="settings_gps_section_realistic_satellite_count">"Realistic satellite count"</string>
     <string name="settings_gps_section_realistic_satellite_count_desc">"Attaches satellite metadata to each update (7–14 satellites visible, 6–12 in fix) instead of zero. Some apps check for zero satellites as a spoofing signal."</string>
     <string name="settings_gps_section_simulate_signal_dropouts">"Simulate signal dropouts"</string>
-    <string name="settings_gps_section_simulate_signal_dropouts_desc">"Briefly pauses the fake location signal every ~10 seconds, like a real GPS dropping signal momentarily. Off by default — the pauses cause visible freezes in most apps. Skipped automatically during route replay."</string>
+    <string name="settings_gps_section_simulate_signal_dropouts_desc">Periodically reports zero speed without position jitter while continuing location updates. Off by default. Not used during route replay or walking to a destination.</string>
     <string name="settings_gps_location_memory">"Location Memory"</string>
     <string name="settings_gps_controls_whether_the_app_remembers_where">"Controls whether the app remembers where you left off when reopened."</string>
     <string name="settings_gps_speed_profiles">"Speed Profiles"</string>

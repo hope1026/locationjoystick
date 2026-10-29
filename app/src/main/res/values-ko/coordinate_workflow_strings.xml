@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="lj_drawer_content_capture">좌표 수집</string>
+    <string name="app_gpx_open_failed">GPX 파일을 열 수 없습니다</string>
+    <string name="link_interceptor_captured">%1$s 위치를 수집했습니다</string>
+    <string name="link_interceptor_jumped_to">%1$s 위치로 순간 이동했습니다</string>
+    <string name="link_interceptor_captured_and_jumped_to">%1$s 위치를 수집하고 순간 이동했습니다</string>
+</resources>

@@ -67,6 +67,7 @@ internal fun FloatingPickerShell(
     onShareCurrentLocation: () -> Unit = {},
     sortMode: SavedItemSortMode? = null,
     onSortModeSelected: (SavedItemSortMode) -> Unit = {},
+    includeCustomSort: Boolean = false,
     searchLabel: String = stringResource(R.string.widget_search),
     compactOverlay: Boolean = false,
     minimized: Boolean = false,
@@ -120,6 +121,7 @@ internal fun FloatingPickerShell(
                         onShareCurrentLocation = onShareCurrentLocation,
                         sortMode = sortMode,
                         onSortModeSelected = onSortModeSelected,
+                        includeCustomSort = includeCustomSort,
                         onDismiss = onDismiss,
                         onToggleMinimize = null,
                         minimized = false,
@@ -218,6 +220,7 @@ private fun FloatingPickerTitleRow(
     onShareCurrentLocation: () -> Unit = {},
     sortMode: SavedItemSortMode?,
     onSortModeSelected: (SavedItemSortMode) -> Unit,
+    includeCustomSort: Boolean = false,
     onDismiss: () -> Unit,
     onToggleMinimize: (() -> Unit)?,
     minimized: Boolean,
@@ -248,7 +251,7 @@ private fun FloatingPickerTitleRow(
             }
         }
         if (!hasBack && sortMode != null) {
-            SavedItemSortMenu(selected = sortMode, onSelected = onSortModeSelected)
+            SavedItemSortMenu(selected = sortMode, onSelected = onSortModeSelected, includeCustom = includeCustomSort)
         }
         if (!hasBack && searchEnabled) {
             IconButton(onClick = onToggleSearch) {

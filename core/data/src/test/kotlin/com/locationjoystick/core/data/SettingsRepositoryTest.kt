@@ -16,6 +16,7 @@ import com.locationjoystick.core.model.SpeedUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
@@ -1180,6 +1181,20 @@ class SettingsRepositoryTest {
 }
 
 class FakeAppPreferencesDataSource : PreferencesDataSource {
+    private val customRouteOrderFlow = MutableStateFlow<List<String>>(emptyList())
+    private val explicitRoutesSortModeFlow = MutableStateFlow<com.locationjoystick.core.model.SavedItemSortMode?>(null)
+
+    override fun getCustomRouteOrder(): Flow<List<String>> = customRouteOrderFlow
+
+    override suspend fun setCustomRouteOrder(ids: List<String>) {
+        customRouteOrderFlow.value = ids.filter { it.isNotBlank() }.distinct()
+    }
+
+    override suspend fun enableCustomRouteOrder(initialIds: List<String>) {
+        if (customRouteOrderFlow.value.isEmpty()) setCustomRouteOrder(initialIds)
+        setRoutesSortMode(com.locationjoystick.core.model.SavedItemSortMode.CUSTOM)
+    }
+
     val speedProfilesFlow =
         MutableStateFlow(
             SpeedProfilePreferences(
@@ -1456,6 +1471,20 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
     private val routesSortNewestFirstFlow = MutableStateFlow(true)
     private val favoritesSortNewestFirstFlow = MutableStateFlow(true)
 
+    override fun getRoutesSortMode(): Flow<com.locationjoystick.core.model.SavedItemSortMode> =
+        combine(routesSortNewestFirstFlow, explicitRoutesSortModeFlow) { newest, explicit ->
+            explicit ?: if (newest) {
+                com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST
+            } else {
+                com.locationjoystick.core.model.SavedItemSortMode.OLDEST_FIRST
+            }
+        }
+
+    override suspend fun setRoutesSortMode(mode: com.locationjoystick.core.model.SavedItemSortMode) {
+        explicitRoutesSortModeFlow.value = mode
+        routesSortNewestFirstFlow.value = mode != com.locationjoystick.core.model.SavedItemSortMode.OLDEST_FIRST
+    }
+
     override fun getRoutesSortNewestFirst(): Flow<Boolean> = routesSortNewestFirstFlow
 
     override suspend fun setRoutesSortNewestFirst(newestFirst: Boolean) {
@@ -1656,6 +1685,7 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
     override fun getSettingsSnapshot(): Flow<SettingsSnapshot> =
         flowOf(
             SettingsSnapshot(
+                customRouteOrder = customRouteOrderFlow.value,
                 slowWalkSpeedMs = AppPreferencesDataSource.DEFAULT_SLOW_WALK_SPEED_MS,
                 walkSpeedMs = AppPreferencesDataSource.DEFAULT_WALK_SPEED_MS,
                 runSpeedMs = AppPreferencesDataSource.DEFAULT_RUN_SPEED_MS,
@@ -1686,6 +1716,7 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         )
 
     override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
+        customRouteOrderFlow.value = snapshot.customRouteOrder
         speedProfilesFlow.value =
             speedProfilesFlow.value.copy(
                 slowWalkSpeedMs = snapshot.slowWalkSpeedMs,
@@ -1703,6 +1734,8 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun clearAllExceptOnboarding() {
         clearAllExceptOnboardingCallCount++
+        customRouteOrderFlow.value = emptyList()
+        explicitRoutesSortModeFlow.value = null
         val onboardingComplete = onboardingCompleteFlow.value
         speedProfilesFlow.value =
             SpeedProfilePreferences(

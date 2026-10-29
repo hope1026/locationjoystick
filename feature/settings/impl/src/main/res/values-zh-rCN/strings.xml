@@ -64,7 +64,7 @@
     <string name="settings_gps_section_realistic_satellite_count">"真实卫星数量"</string>
     <string name="settings_gps_section_realistic_satellite_count_desc">"每次位置更新都附带卫星元数据（可见 7–14 颗、参与定位 6–12 颗），而不是 0 颗。部分应用会把卫星数为 0 当作模拟定位的特征。"</string>
     <string name="settings_gps_section_simulate_signal_dropouts">"模拟信号中断"</string>
-    <string name="settings_gps_section_simulate_signal_dropouts_desc">"每隔约 10 秒短暂中断一次模拟位置信号，类似真实 GPS 偶尔丢失信号。默认关闭 — 中断会导致大多数应用出现可见卡顿。路线回放期间会自动跳过。"</string>
+    <string name="settings_gps_section_simulate_signal_dropouts_desc">定期上报零速度并暂停位置抖动，但仍持续更新位置。默认关闭，路线回放和步行前往目标期间不生效。</string>
     <string name="settings_gps_location_memory">"位置记忆"</string>
     <string name="settings_gps_controls_whether_the_app_remembers_where">"控制应用重新打开时是否记住上次使用的位置。"</string>
     <string name="settings_gps_speed_profiles">"速度预设"</string>

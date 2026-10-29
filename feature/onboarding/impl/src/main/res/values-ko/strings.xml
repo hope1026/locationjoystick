@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="onboarding_set_up_locationjoystick">locationjoystick 설정</string>
+    <string name="onboarding_complete_the_steps_below_to_start">아래 단계를 완료하면 사용할 수 있습니다.</string>
+    <string name="onboarding_trouble_setting_up">설정에 문제가 있나요?</string>
+    <string name="onboarding_getting_started">시작하기</string>
+    <string name="onboarding_separator_dot">·</string>
+    <string name="onboarding_troubleshooting">문제 해결</string>
+    <string name="onboarding_debug_build_permissions_optional">디버그 빌드 — 권한 설정은 선택 사항</string>
+    <string name="onboarding_skip_this_check">이 확인 단계를 건너뛸까요?</string>
+    <string name="onboarding_most_devices_need_locationjoystick_set_a">대부분의 기기에서는 locationjoystick을 모의 위치 앱으로 지정해야 합니다. Android가 감지하지 못하는 수정된 환경 등 다른 방식으로 모의 위치가 작동하는 것을 확인한 경우에만 건너뛰세요.</string>
+    <string name="onboarding_version">v%1$s</string>
+    <string name="onboarding_skip_anyway">건너뛰기</string>
+    <string name="onboarding_cancel">취소</string>
+    <string name="onboarding_step_x_of_3">3단계 중 %1$d단계</string>
+    <string name="onboarding_location_permission">위치 권한</string>
+    <string name="onboarding_location_permission_desc">지도를 실제 위치로 이동하거나 경로를 기록하려면 필요합니다.</string>
+    <string name="onboarding_grant_permission">권한 허용</string>
+    <string name="onboarding_display_over_other_apps">다른 앱 위에 표시</string>
+    <string name="onboarding_display_over_other_apps_desc">다른 앱을 사용하는 동안 플로팅 조이스틱과 빠른 접근 위젯을 표시하려면 필요합니다.</string>
+    <string name="onboarding_open_settings">설정 열기</string>
+    <string name="onboarding_set_as_fake_gps_app">모의 위치 앱으로 지정</string>
+    <string name="onboarding_set_as_fake_gps_app_desc">개발자 옵션에서 모의 위치 앱 선택을 찾아 locationjoystick을 선택하세요. Shelter 등의 업무 프로필에 앱을 설치했다면 같은 프로필의 개발자 옵션을 여세요. Android는 다른 프로필의 앱을 선택할 수 없도록 제한합니다.</string>
+    <string name="onboarding_open_developer_options">개발자 옵션 열기</string>
+    <string name="onboarding_skip">건너뛰기</string>
+    <string name="onboarding_start_using_locationjoystick">locationjoystick 시작하기</string>
+    <string name="onboarding_optional">선택 사항</string>
+    <string name="onboarding_compass_orientation">나침반 방향 확인(선택)</string>
+    <string name="onboarding_compass_orientation_desc">탭하여 걷기를 사용하지 않으면 이 단계를 건너뛰어도 됩니다. Android 접근성 권한으로 게임의 나침반을 읽어 탭한 방향으로 걸어가게 합니다.</string>
+    <string name="onboarding_compass_review">안내 확인 후 켜기</string>
+</resources>

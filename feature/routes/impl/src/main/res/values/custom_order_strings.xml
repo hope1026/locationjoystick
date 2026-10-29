@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="routes_custom_order_hint">Hold a handle and drag to change the route order.</string>
+    <string name="routes_custom_order_search_hint">Clear search to reorder routes.</string>
+    <string name="routes_custom_order_drag_cd">Drag to reorder %1$s</string>
+    <string name="routes_custom_order_save_error">Couldn\'t save the route order. Try again.</string>
+    <string name="routes_custom_order_move_up">Move up</string>
+    <string name="routes_custom_order_move_down">Move down</string>
+</resources>

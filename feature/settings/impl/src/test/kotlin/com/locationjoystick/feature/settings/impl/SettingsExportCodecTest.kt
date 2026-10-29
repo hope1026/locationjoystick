@@ -72,6 +72,42 @@ private fun fullExportData(): ExportData =
 @Config(sdk = [33])
 class SettingsExportCodecTest {
     @Test
+    fun `custom route order round-trips while legacy exports remain valid`() {
+        val original =
+            minimalExportData().copy(
+                routesSortMode = SavedItemSortMode.CUSTOM,
+                customRouteOrder = listOf("route-b", "route-a"),
+            )
+        val json = SettingsExportCodec.serializeExportData(original)
+        val parsed = SettingsExportCodec.parseExportData(json)
+        assertEquals(SavedItemSortMode.CUSTOM, parsed.routesSortMode)
+        assertEquals(original.customRouteOrder, parsed.customRouteOrder)
+        val old = JSONObject(json).apply { remove("customRouteOrder") }.toString()
+        assertEquals(emptyList<String>(), SettingsExportCodec.parseExportData(old).customRouteOrder)
+    }
+
+    @Test
+    fun `custom order ignores duplicate ids and cannot enable custom sorting for favorites`() {
+        val json =
+            JSONObject(SettingsExportCodec.serializeExportData(minimalExportData())).apply {
+                put("customRouteOrder", org.json.JSONArray(listOf("b", "b", "a")))
+                put("favoritesSortMode", SavedItemSortMode.CUSTOM.name)
+            }
+        val parsed = SettingsExportCodec.parseExportData(json.toString())
+        assertEquals(listOf("b", "a"), parsed.customRouteOrder)
+        assertEquals(SavedItemSortMode.NEWEST_FIRST, parsed.favoritesSortMode)
+    }
+
+    @Test
+    fun `malformed custom order is rejected before import writes anything`() {
+        val json =
+            JSONObject(SettingsExportCodec.serializeExportData(minimalExportData())).apply {
+                put("customRouteOrder", org.json.JSONArray(listOf(4)))
+            }
+        assertFalse(runCatching { SettingsExportCodec.parseExportData(json.toString()) }.isSuccess)
+    }
+
+    @Test
     fun `round-trip preserves route and favorite sort modes`() {
         val original =
             minimalExportData().copy(

@@ -15,6 +15,13 @@
     <string name="route_detail_speed_profile">"Speed profile"</string>
     <string name="route_detail_waypoints">"Waypoints"</string>
     <string name="route_detail_remove_waypoint_cd">"Remove waypoint"</string>
+    <string name="route_detail_edit_waypoint_cd">Edit waypoint %1$d</string>
+    <string name="route_waypoint_edit_hint">Tap the map to move this waypoint.</string>
+    <string name="route_waypoint_edit_save_error">Couldn\'t save this waypoint. Try again.</string>
+    <string name="route_waypoint_edit_saving">Saving…</string>
+    <string name="route_waypoint_edit_map_cd">Waypoint location map</string>
+    <string name="route_waypoint_edit_map_ready">Map ready</string>
+    <string name="route_waypoint_edit_map_loading">Loading map</string>
     <string name="route_detail_speed_profile_none">"None"</string>
     <string name="route_detail_waypoint_number">"Waypoint %1$d"</string>
     <string name="route_detail_wait_seconds">"Wait here: %1$d s"</string>

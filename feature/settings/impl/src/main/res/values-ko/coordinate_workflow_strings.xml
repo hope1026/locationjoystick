@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="settings_viewmodel_settings_saved">설정을 저장했습니다</string>
+    <string name="settings_viewmodel_failed_to_save_settings">설정을 저장하지 못했습니다</string>
+    <string name="settings_viewmodel_all_data_reset">모든 데이터를 초기화했습니다</string>
+    <string name="settings_viewmodel_failed_to_reset_data">데이터를 초기화하지 못했습니다</string>
+    <string name="settings_viewmodel_export_complete">내보내기를 완료했습니다</string>
+    <string name="settings_viewmodel_failed_to_export">내보내지 못했습니다</string>
+    <string name="settings_viewmodel_failed_to_import_empty_file">가져올 수 없습니다. 파일이 비어 있습니다</string>
+    <string name="settings_viewmodel_import_complete">가져오기를 완료했습니다</string>
+    <string name="settings_viewmodel_failed_to_import">가져오지 못했습니다</string>
+    <string name="settings_viewmodel_failed_to_prepare_qr_export">QR 내보내기를 준비하지 못했습니다. Wi-Fi 연결을 확인하세요</string>
+    <string name="settings_viewmodel_invalid_qr_code">올바른 QR 코드가 아닙니다. Location Joystick에서 내보낸 코드인지 확인하세요</string>
+    <string name="settings_viewmodel_code_must_be_n_characters">코드는 %1$d자리여야 합니다</string>
+    <string name="settings_viewmodel_no_sender_found_for_code">코드 %1$s에 해당하는 보내는 기기를 찾지 못했습니다</string>
+    <string name="settings_viewmodel_failed_to_fetch_export">내보낸 데이터를 받지 못했습니다. 두 기기가 같은 Wi-Fi에 연결되어 있는지 확인하세요</string>
+    <string name="settings_viewmodel_failed_to_import_from_gps_joystick">GPS Joystick에서 가져오지 못했습니다</string>
+    <string name="settings_viewmodel_failed_to_import_from_yamla">YAMLA에서 가져오지 못했습니다</string>
+    <string name="settings_viewmodel_imported_favorites_from_yamla">YAMLA에서 즐겨찾기 %1$d개를 가져왔습니다</string>
+    <string name="settings_viewmodel_imported_favorites_from_yamla_speeds_updated">YAMLA에서 즐겨찾기 %1$d개를 가져오고 속도를 갱신했습니다</string>
+    <string name="settings_migration_imported_gps_joystick">GPS Joystick에서 즐겨찾기 %1$d개와 경로 %2$d개를 가져왔습니다</string>
+    <plurals name="settings_migration_skipped_oversized">
+        <item quantity="one">너무 커서 가져올 수 없는 경로 %1$d개를 건너뛰었습니다</item>
+        <item quantity="other">너무 커서 가져올 수 없는 경로 %1$d개를 건너뛰었습니다</item>
+    </plurals>
+    <string name="settings_roaming_sub_screen_walk_around_the_block">주변 걷기</string>
+    <string name="settings_roaming_sub_screen_picks_random_spots_within_a_radius_and_walks_between_them">반경 안에서 임의의 위치를 선택해 그 사이를 걸어갑니다.</string>
+    <string name="settings_roaming_sub_screen_planting">원형 걷기</string>
+    <string name="settings_roaming_sub_screen_starting_radius_m">시작 반경 (m)</string>
+    <string name="settings_roaming_sub_screen_ending_radius_m">끝 반경 (m)</string>
+    <string name="settings_roaming_sub_screen_speed_profile">속도 프로필</string>
+    <string name="settings_roaming_sub_screen_infinite_loop">무한 반복</string>
+    <string name="settings_roaming_sub_screen_keeps_expanding_and_contracting_until_you_stop_roaming">자유 이동을 중지할 때까지 반경을 넓혔다 줄이기를 반복합니다.</string>
+    <string name="settings_roaming_sub_screen_number_of_loops">반복 횟수</string>
+    <string name="settings_spiral_description">현재 위치를 중심으로 바깥 반경까지 나선형으로 걸어간 뒤 안쪽 반경으로 돌아옵니다. 한 번 넓혔다 돌아오면 1회입니다.</string>
+    <string name="menus_paste_coordinates">좌표 붙여넣기</string>
+    <string name="menus_paste_latitude_and_longitude_to_teleport_walk_or_save_as_a_f">위도와 경도를 붙여넣어 순간 이동하거나, 걸어가거나, 즐겨찾기로 저장합니다.</string>
+    <string name="menus_capture_coordinates">좌표 수집</string>
+    <string name="menus_collect_map_links_from_other_apps_into_a_list_then_save_them">다른 앱의 지도 링크를 목록에 모은 뒤 경로로 저장합니다.</string>
+</resources>

@@ -25,6 +25,7 @@ import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.isRoutePlaying
 import com.locationjoystick.core.model.sortedBySavedItemMode
+import com.locationjoystick.core.model.sortedForRoutePicker
 import com.locationjoystick.core.model.speedProfileIdForKind
 import com.locationjoystick.core.model.toConfig
 import com.locationjoystick.core.routing.OsrmClient
@@ -160,7 +161,8 @@ class MapController
                 combine(
                     routeRepository.getRoutes(),
                     settingsRepository.getRoutesSortMode(),
-                ) { routes, sortMode -> routes.sortedBySavedItemMode(sortMode) { it.name } }
+                    settingsRepository.getCustomRouteOrder(),
+                ) { routes, sortMode, customOrder -> routes.sortedForRoutePicker(sortMode, customOrder) }
                     .collect { sorted -> _sharedState.update { it.copy(routes = sorted) } }
             }
         }

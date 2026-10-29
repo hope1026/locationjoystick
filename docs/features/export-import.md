@@ -25,9 +25,17 @@ Each entry in `routes` includes the optional `speedProfileId` field (`Route.spee
 Each entry in `routes` also includes `randomizeTeleportOrder` (`Route.randomizeTeleportOrder`). Old exports without it import cleanly — a missing field defaults to `false`.
 
 Each waypoint in a route includes `waitSeconds` (`Waypoint.waitSeconds`, used by teleport routes — see docs/features/routes.md, "Teleport Routes"). Old exports without it import cleanly — a missing `waitSeconds` defaults to `0`.
-`routesSortMode` and `favoritesSortMode` preserve the four list sort choices. Older exports with
+`routesSortMode` preserves the four standard choices plus route-only **Custom order**.
+`favoritesSortMode` keeps the four standard choices. Older exports with
 only `routesSortNewestFirst` / `favoritesSortNewestFirst` migrate to **Newest saved** or
 **Oldest saved**. The legacy booleans remain in new exports for backward compatibility.
+
+`customRouteOrder` (`ExportData.customRouteOrder`) carries the custom route-ID sequence. The field
+is optional, so an older file without it uses an empty sequence. Custom display ordering ignores
+duplicate and stale IDs and appends routes absent from the sequence by saved time, then ID.
+Changing to a standard sort does not erase the stored sequence. Export/import preserves the
+sequence independently of the currently selected route sort mode; reset clears it with the other
+display preferences. See [Custom route order](routes.md#custom-route-order).
 
 Schema version: `AppConstants.ExportConstants.SCHEMA_VERSION`.
 

@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="paste_coordinates_screen_paste_coordinates">좌표 붙여넣기</string>
+    <string name="paste_coordinates_screen_coordinates">좌표</string>
+    <string name="paste_coordinates_screen_paste_coordinates_here_one_per_line">좌표를 한 줄에 하나씩 붙여넣으세요…\n</string>
+    <string name="paste_coordinates_screen_swap_lat_lon_order">위도·경도 순서 바꾸기</string>
+    <string name="paste_coordinates_screen_use_this_when_the_first_number_is_longitude">첫 번째 숫자가 경도인 경우 사용하세요</string>
+    <string name="paste_coordinates_screen_paste_from_clipboard">클립보드에서 붙여넣기</string>
+    <string name="paste_coordinates_screen_load_points">지점 불러오기</string>
+    <string name="paste_coordinates_screen_point_order">지점 순서</string>
+    <string name="paste_coordinates_screen_build_mode">경로 생성 방식</string>
+    <string name="paste_coordinates_screen_circle_radius_meters">원 반경(미터)</string>
+    <string name="paste_coordinates_screen_default_35_m_circles_stay_geometric_only_travel_between_them">기본값은 35 m입니다. 원형 경로는 그대로 유지되며, 원 사이를 이동할 때만 도로를 따라갈 수 있습니다.</string>
+    <string name="paste_coordinates_screen_between_circles">원 사이 이동</string>
+    <string name="paste_coordinates_screen_save_route">경로 저장</string>
+    <string name="paste_coordinates_screen_route_name">경로 이름</string>
+    <string name="paste_coordinates_screen_save">저장</string>
+    <string name="paste_coordinates_screen_cancel">취소</string>
+    <string name="routes_screen_add_route">경로 추가</string>
+    <string name="routes_screen_search_routes">경로 검색</string>
+    <string name="routes_screen_paste_coordinates">좌표 붙여넣기</string>
+    <string name="routes_screen_share">공유</string>
+    <string name="routes_share_title">%1$s 공유</string>
+    <string name="routes_screen_copy">복사</string>
+    <string name="routes_screen_send_as_message">메시지로 보내기</string>
+    <string name="routes_screen_close">닫기</string>
+    <string name="routes_no_routes_yet">저장된 경로가 없습니다</string>
+    <string name="routes_add_a_route">경로 추가</string>
+    <string name="routes_no_routes_match_your_search">검색 결과와 일치하는 경로가 없습니다</string>
+    <string name="routes_copied_coordinates">좌표를 복사했습니다</string>
+    <string name="paste_keep_original">원래 순서 유지</string>
+    <string name="paste_optimize_proximity">가까운 순서로 정렬</string>
+    <string name="paste_as_is">입력한 그대로</string>
+    <string name="paste_walkable_path">걸을 수 있는 경로</string>
+    <string name="paste_planting_mode">원형 걷기</string>
+    <string name="paste_straight">직선</string>
+    <string name="paste_via_roads">도로 따라가기</string>
+    <string name="paste_building">생성 중…</string>
+    <string name="paste_build_preview">미리보기 생성</string>
+    <string name="paste_save_route">경로 저장</string>
+    <string name="paste_empty_clipboard">클립보드가 비어 있습니다.</string>
+    <plurals name="paste_coordinates_screen_points_loaded">
+        <item quantity="one">지점 %1$d개를 불러왔습니다</item>
+        <item quantity="other">지점 %1$d개를 불러왔습니다</item>
+    </plurals>
+    <plurals name="paste_coordinates_screen_waypoints_summary">
+        <item quantity="one">지점 %1$d개 · %2$s</item>
+        <item quantity="other">지점 %1$d개 · %2$s</item>
+    </plurals>
+</resources>

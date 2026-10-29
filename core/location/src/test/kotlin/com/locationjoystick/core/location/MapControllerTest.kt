@@ -81,6 +81,7 @@ class MapControllerTest {
                 mockk<SettingsRepository>(relaxed = true) {
                     every { getActiveSpeedProfile() } returns flowOf(walkProfile)
                     every { getRoutesSortMode() } returns flowOf(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
+                    every { getCustomRouteOrder() } returns flowOf(emptyList())
                     every { getFavoritesSortMode() } returns flowOf(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
                     every { getSpeedUnit() } returns flowOf(SpeedUnit.KMH)
                     every { getRecentSearches() } returns flowOf(emptyList())
@@ -182,6 +183,7 @@ class MapControllerTest {
                 mockk<SettingsRepository>(relaxed = true) {
                     every { getActiveSpeedProfile() } returns flowOf(walkProfile)
                     every { getRoutesSortMode() } returns flowOf(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
+                    every { getCustomRouteOrder() } returns flowOf(emptyList())
                     every { getFavoritesSortMode() } returns flowOf(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
                     every { getSpeedUnit() } returns flowOf(SpeedUnit.KMH)
                     every { getRecentSearches() } returns flowOf(emptyList())
@@ -526,7 +528,11 @@ class MapControllerTest {
     @Test
     fun `toggleHomeFavorite sets, moves and clears the Home id`() =
         runTest {
-            val real = mockk<RealLocationRepository>(relaxed = true)
+            val real =
+                mockk<RealLocationRepository> {
+                    every { lastKnownRealPosition() } returns null
+                    every { hasFinePermission() } returns false
+                }
             val controller = buildRestoreController(LocationRepository(), real, backgroundScope, homeId = "a")
             val settings = lastRestoreSettings!!
 
@@ -641,6 +647,61 @@ class MapControllerTest {
             verify(exactly = 2) { real.lastKnownRealPosition() }
         }
 
+    @Test
+    fun `shared route picker follows custom order and retains automatic sort choices`() =
+        runTest {
+            val routes =
+                MutableStateFlow(
+                    listOf(
+                        com.locationjoystick.core.model
+                            .Route("a", "Zulu", createdAt = 20L),
+                        com.locationjoystick.core.model
+                            .Route("b", "Alpha", createdAt = 10L),
+                        com.locationjoystick.core.model
+                            .Route("c", "Middle", createdAt = 30L),
+                    ),
+                )
+            val mode = MutableStateFlow(com.locationjoystick.core.model.SavedItemSortMode.CUSTOM)
+            val order = MutableStateFlow(listOf("b", "c", "a"))
+            val real = mockk<RealLocationRepository>(relaxed = true)
+            val controller =
+                buildRestoreController(
+                    LocationRepository(),
+                    real,
+                    backgroundScope,
+                    routeFlow = routes,
+                    routeSortMode = mode,
+                    customRouteOrder = order,
+                )
+            runCurrent()
+            assertEquals(
+                listOf("b", "c", "a"),
+                controller.sharedState.value.routes
+                    .map { it.id },
+            )
+            order.value = listOf("a", "b", "c")
+            runCurrent()
+            assertEquals(
+                listOf("a", "b", "c"),
+                controller.sharedState.value.routes
+                    .map { it.id },
+            )
+            mode.value = com.locationjoystick.core.model.SavedItemSortMode.NAME_ASCENDING
+            runCurrent()
+            assertEquals(
+                listOf("b", "c", "a"),
+                controller.sharedState.value.routes
+                    .map { it.id },
+            )
+            mode.value = com.locationjoystick.core.model.SavedItemSortMode.CUSTOM
+            runCurrent()
+            assertEquals(
+                listOf("a", "b", "c"),
+                controller.sharedState.value.routes
+                    .map { it.id },
+            )
+        }
+
     private fun buildRestoreController(
         locationRepository: LocationRepository,
         realLocationRepository: RealLocationRepository,
@@ -649,11 +710,16 @@ class MapControllerTest {
         homeId: String? = null,
         favorites: List<FavoriteLocation> = emptyList(),
         homeFlow: MutableStateFlow<String?> = MutableStateFlow(homeId),
+        routeFlow: MutableStateFlow<List<com.locationjoystick.core.model.Route>> = MutableStateFlow(emptyList()),
+        routeSortMode: MutableStateFlow<com.locationjoystick.core.model.SavedItemSortMode> =
+            MutableStateFlow(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST),
+        customRouteOrder: MutableStateFlow<List<String>> = MutableStateFlow(emptyList()),
     ): MapController {
         val settingsRepository =
             mockk<SettingsRepository>(relaxed = true) {
                 every { getActiveSpeedProfile() } returns flowOf(walkProfile)
-                every { getRoutesSortMode() } returns flowOf(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
+                every { getRoutesSortMode() } returns routeSortMode
+                every { getCustomRouteOrder() } returns customRouteOrder
                 every { getFavoritesSortMode() } returns flowOf(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
                 every { getSpeedUnit() } returns flowOf(SpeedUnit.KMH)
                 every { getRecentSearches() } returns flowOf(emptyList())
@@ -675,7 +741,7 @@ class MapControllerTest {
         return MapController(
             context = context,
             locationRepository = locationRepository,
-            routeRepository = mockk<RouteRepository>(relaxed = true) { every { getRoutes() } returns emptyFlow() },
+            routeRepository = mockk<RouteRepository>(relaxed = true) { every { getRoutes() } returns routeFlow },
             favoriteRepository =
                 mockk<FavoriteRepository>(relaxed = true) { every { getFavorites() } returns flowOf(favorites) },
             settingsRepository = settingsRepository,

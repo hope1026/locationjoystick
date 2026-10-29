@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">locationjoystick</string>
+    <string name="accessibility_service_label">locationjoystick 나침반</string>
+    <string name="accessibility_service_description">앱 내 접근성 안내에서 동의한 뒤 선택 기능인 탭해서 걷기의 나침반에만 사용합니다. 탭해서 걷기 화면을 열면 스크린샷을 한 번 촬영해 게임의 나침반 방향을 읽습니다. 스크린샷은 기기 안에서만 처리하고 즉시 삭제하며, 어떤 정보도 수집하거나 공유하지 않습니다. 장애인을 위한 접근성 도구는 아닙니다.</string>
+    <string name="app_couldn_t_open_that_link">링크를 열 수 없습니다</string>
+    <string name="drawer_close_menu_cd">메뉴 닫기</string>
+    <string name="drawer_home">홈</string>
+    <string name="drawer_map">지도</string>
+    <string name="drawer_routes">경로</string>
+    <string name="drawer_favorites">즐겨찾기</string>
+    <string name="drawer_group_sync">그룹 동기화</string>
+    <string name="drawer_settings">설정</string>
+    <string name="drawer_website">웹사이트</string>
+    <string name="drawer_discord">Discord</string>
+    <string name="drawer_acknowledgements">오픈소스 고지</string>
+    <string name="drawer_external_link_hint">브라우저에서 열기</string>
+    <string name="idle_map_description">모의 GPS 위치를 설정하고 지도에서 이동을 조절합니다.</string>
+    <string name="idle_routes_description">저장한 경로를 재생합니다.</string>
+    <string name="idle_favorites_description">저장한 위치로 순간 이동하거나 걸어갑니다.</string>
+    <string name="idle_group_sync_description">같은 Wi-Fi에 연결된 다른 기기와 위치를 동기화합니다.</string>
+    <string name="idle_settings_description">locationjoystick과 모의 위치 기능을 설정합니다.</string>
+    <string name="whats_new_new_and_improved">새 기능과 개선 사항</string>
+    <string name="whats_new_fixes">오류 수정</string>
+    <string name="whats_new_what_s_new">새로운 소식</string>
+    <string name="whats_new_what_s_new_in_version">v%1$s의 새로운 소식</string>
+    <string name="whats_new_dismiss_cd">닫기</string>
+    <string name="whats_new_couldn_t_load_what_s_new">새로운 소식을 불러올 수 없습니다. 연결을 확인하거나 웹에서 전체 변경 내역을 확인해 주세요.</string>
+    <string name="whats_new_bullet">•</string>
+    <string name="whats_new_got_it">확인</string>
+    <string name="whats_new_view_full_changelog">전체 변경 내역 보기</string>
+    <string name="drawer_capture">좌표 수집</string>
+    <string name="idle_capture_description">지도 링크의 위치를 모아 경로로 저장합니다.</string>
+    <string name="whats_new_popup_cd">이 버전의 새로운 소식</string>
+    <string name="update_available_cd">업데이트 가능: 버전 %1$s</string>
+    <string name="update_available_label">v%1$s 업데이트 가능</string>
+    <string name="update_available_dismiss_cd">닫기</string>
+</resources>

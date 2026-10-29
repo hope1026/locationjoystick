@@ -86,6 +86,7 @@ class MapControllerRoamingSpeedTest {
         mockk(relaxed = true) {
             every { getActiveSpeedProfile() } returns flowOf(walkProfile)
             every { getRoutesSortMode() } returns flowOf(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
+            every { getCustomRouteOrder() } returns flowOf(emptyList())
             every { getFavoritesSortMode() } returns flowOf(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
             every { getHomeFavoriteId() } returns flowOf(null)
             every { getSpeedUnit() } returns flowOf(SpeedUnit.KMH)

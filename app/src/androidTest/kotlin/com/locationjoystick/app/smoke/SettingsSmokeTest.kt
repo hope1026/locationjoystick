@@ -25,7 +25,7 @@ class SettingsSmokeTest : BaseSmokeTest() {
 
     @Test
     fun speed_unit_toggle_no_crash() {
-        composeRule.onNodeWithText("Movement & GPS").performClick()
+        composeRule.onNodeWithText("Movement & GPS").performScrollTo().performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("mph").performClick()
         composeRule.waitForIdle()
@@ -41,63 +41,63 @@ class SettingsSmokeTest : BaseSmokeTest() {
 
     @Test
     fun settings_shows_speed_profiles_section() {
-        composeRule.onNodeWithText("Movement & GPS").performClick()
+        composeRule.onNodeWithText("Movement & GPS").performScrollTo().performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Speed Profiles").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_gps_jitter_section() {
-        composeRule.onNodeWithText("Movement & GPS").performClick()
+        composeRule.onNodeWithText("Movement & GPS").performScrollTo().performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Location Randomness").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_gps_realism_section() {
-        composeRule.onNodeWithText("Movement & GPS").performClick()
+        composeRule.onNodeWithText("Movement & GPS").performScrollTo().performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("GPS Realism").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_map_section() {
-        composeRule.onNodeWithText("Movement & GPS").performClick()
+        composeRule.onNodeWithText("Movement & GPS").performScrollTo().performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Remember last location").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_app_features_section() {
-        composeRule.onNodeWithText("Menus").performClick()
+        composeRule.onNodeWithText("Menus").performScrollTo().performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("App Features").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_location_memory_section() {
-        composeRule.onNodeWithText("Movement & GPS").performClick()
+        composeRule.onNodeWithText("Movement & GPS").performScrollTo().performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Location Memory").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_favorites_section() {
-        composeRule.onNodeWithText("Favorites & Routes").performClick()
+        composeRule.onNodeWithText("Favorites & Routes").performScrollTo().performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Options for the favorites list.").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_routes_section() {
-        composeRule.onNodeWithText("Favorites & Routes").performClick()
+        composeRule.onNodeWithText("Favorites & Routes").performScrollTo().performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Options for the routes list.").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_roaming_section() {
-        composeRule.onNodeWithText("Roaming").performClick()
+        composeRule.onNodeWithText("Roaming").performScrollTo().performClick()
         composeRule.waitForIdle()
         composeRule
             .onNodeWithText(
@@ -108,7 +108,7 @@ class SettingsSmokeTest : BaseSmokeTest() {
 
     @Test
     fun settings_shows_planting_defaults() {
-        composeRule.onNodeWithText("Roaming").performClick()
+        composeRule.onNodeWithText("Roaming").performScrollTo().performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Starting radius (m)").performScrollTo().assertIsDisplayed()
     }

@@ -8,6 +8,7 @@
 #   ./scripts/screenshot-gallery.sh
 #   ./scripts/screenshot-gallery.sh --output /tmp/gallery
 #   ./scripts/screenshot-gallery.sh --device emulator-5554
+#   ./scripts/screenshot-gallery.sh --package com.locationjoystick.app.fork --device emulator-5554
 #   ./scripts/screenshot-gallery.sh --steps 16,17
 #   ./scripts/screenshot-gallery.sh --steps 14-17
 #   ./scripts/screenshot-gallery.sh --auto --steps 16-17
@@ -32,7 +33,7 @@
 #   --steps 16,17        (run steps 16 and 17 only)
 #   --steps 14-17        (run steps 14, 15, 16, 17)
 #   --steps 01,03,05     (run steps 1, 3, 5)
-# Seeding (routes, favorites) always runs before the first selected step.
+# Seeding runs only for selected steps that need saved routes or favorites.
 #
 # Output files (25 canonical PNGs). Each file's number prefix is its step
 # number, so --steps N writes N_*.png (step 19 runs out of order, see below):
@@ -60,7 +61,7 @@ set -euo pipefail
 # ── Config ───────────────────────────────────────────────────────────────────
 
 PACKAGE="com.locationjoystick.app"
-ACTIVITY=".MainActivity"
+ACTIVITY="com.locationjoystick.app.MainActivity"
 OUTPUT_DIR="docs/wiki/screenshots"
 ADB_DEVICE=""
 AUTO=false
@@ -74,6 +75,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --output)          OUTPUT_DIR="$2"; shift 2 ;;
     --device)          ADB_DEVICE="-s $2"; shift 2 ;;
+    --package)         PACKAGE="$2"; shift 2 ;;
     --auto)            AUTO=true; shift ;;
     --steps)           STEPS_FILTER="$2"; shift 2 ;;
     --marketing-only)  MARKETING_ONLY=true; shift ;;
@@ -200,7 +202,7 @@ tap_text() {
 
 # Tap a UI element whose text or content-desc is exactly the given string.
 tap_text_exact() {
-  local text="$1"
+  local text="$1" optional="${2:-false}"
   local dump centre x y
   dump=$(ui_dump)
   centre=$(perl -lne '
@@ -211,7 +213,9 @@ tap_text_exact() {
   ' "$dump" 2>/dev/null)
   rm -f "$dump"
   if [[ -z "$centre" ]]; then
-    warn "Could not find UI element with exact text \"$text\" — skipping tap."
+    if [[ "$optional" != true ]]; then
+      warn "Could not find UI element with exact text \"$text\" — skipping tap."
+    fi
     return 1
   fi
   read -r x y <<< "$centre"
@@ -762,7 +766,7 @@ go_idle() {
   wait_s 4 "App starting"
   # A session running at kill time is restored on launch and opens the map, not the idle hub.
   # Relaunching would restore it again, so stop it and go Home instead.
-  if tap_text_exact "Stop"; then
+  if tap_text_exact "Stop" true; then
     wait_s 3 "Stopping restored session"
     # The restored map is the nav root, so back would leave the app; use the drawer.
     local dump; dump=$(ui_dump)
@@ -939,18 +943,29 @@ rm -f "$dump"
 # 04, 06, 07) and the route detail (10). Seed them once up front so every
 # subsequent step sees populated lists.
 
-if $AUTO; then
-  log "=== SEEDING ROUTES ==="
-  go_idle
-  tap_text_below "Routes" "$CARD_Y_MIN"
-  wait_s 2 "Routes loading"
-  seed_route_if_needed
+needs_seed_for_steps() {
+  local step
+  for step in "$@"; do
+    if should_run_step "$step"; then return 0; fi
+  done
+  return 1
+}
 
-  log "=== SEEDING FAVORITES ==="
-  go_idle
-  tap_text_below "Favorites" "$CARD_Y_MIN"
-  wait_s 2 "Favorites loading"
-  seed_favorites_if_needed
+if $AUTO; then
+  if needs_seed_for_steps "03" "06" "10"; then
+    log "=== SEEDING ROUTES ==="
+    go_idle
+    tap_text_below "Routes" "$CARD_Y_MIN"
+    wait_s 2 "Routes loading"
+    seed_route_if_needed
+  fi
+  if needs_seed_for_steps "04" "07" "11" "16"; then
+    log "=== SEEDING FAVORITES ==="
+    go_idle
+    tap_text_below "Favorites" "$CARD_Y_MIN"
+    wait_s 2 "Favorites loading"
+    seed_favorites_if_needed
+  fi
 fi
 
 # ── 01. IdleScreen ───────────────────────────────────────────────────────────
@@ -1065,6 +1080,10 @@ fi
 
 if should_run_step "10"; then
   log "=== 10 ROUTE DETAIL ==="
+  # Step 10 can run on its own; auto-seeding may have left the Favorites screen open.
+  go_idle
+  tap_text_below "Routes" "$CARD_Y_MIN"
+  wait_s 2 "Routes loading"
   if $AUTO; then
     seed_route_if_needed
   else

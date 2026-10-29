@@ -23,9 +23,10 @@ import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.Waypoint
-import com.locationjoystick.core.model.sortedBySavedItemMode
+import com.locationjoystick.core.model.sortedForRoutePicker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,6 +36,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
@@ -59,9 +62,10 @@ class RoutesViewModel
                 settingsRepository.getRoutesSortMode(),
                 settingsRepository.getHideTeleportFeatures(),
                 locationRepository.isRoadRouteFetchInFlight,
-            ) { routes, sortMode, hideTeleportFeatures, isRoadRouteFetchInFlight ->
+                settingsRepository.getCustomRouteOrder(),
+            ) { routes, sortMode, hideTeleportFeatures, isRoadRouteFetchInFlight, customOrder ->
                 RoutesUiState(
-                    routes = routes.sortedBySavedItemMode(sortMode) { it.name },
+                    routes = routes.sortedForRoutePicker(sortMode, customOrder),
                     isLoading = false,
                     sortMode = sortMode,
                     hideTeleportFeatures = hideTeleportFeatures,
@@ -75,6 +79,8 @@ class RoutesViewModel
 
         private val _errorMessage = MutableStateFlow<String?>(null)
         val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+        private val orderMutation = Mutex()
 
         fun clearError() {
             _errorMessage.value = null
@@ -100,9 +106,36 @@ class RoutesViewModel
 
         fun setSortMode(mode: SavedItemSortMode) {
             viewModelScope.launch {
-                settingsRepository.setRoutesSortMode(mode)
+                orderMutation.withLock {
+                    try {
+                        if (mode == SavedItemSortMode.CUSTOM) {
+                            settingsRepository.enableCustomRouteOrder(uiState.value.routes.map { it.id })
+                        } else {
+                            settingsRepository.setRoutesSortMode(mode)
+                        }
+                    } catch (error: Exception) {
+                        if (error is CancellationException) throw error
+                        Log.e(TAG, "Failed to change route sorting", error)
+                        _errorMessage.value = context.getString(R.string.routes_custom_order_save_error)
+                    }
+                }
             }
         }
+
+        suspend fun saveCustomOrder(ids: List<String>): Boolean =
+            orderMutation.withLock {
+                try {
+                    val currentRoutes = routeRepository.getRoutes().first()
+                    val normalized = currentRoutes.sortedForRoutePicker(SavedItemSortMode.CUSTOM, ids).map { it.id }
+                    settingsRepository.setCustomRouteOrder(normalized)
+                    true
+                } catch (error: Exception) {
+                    if (error is CancellationException) throw error
+                    Log.e(TAG, "Failed to save custom route order", error)
+                    _errorMessage.value = context.getString(R.string.routes_custom_order_save_error)
+                    false
+                }
+            }
 
         fun deleteRoute(routeId: String) {
             viewModelScope.launch {

@@ -56,6 +56,25 @@ class FakeRouteDao(
         waypointDao.delete(waypointId)
     }
 
+    override suspend fun updateWaypointCoordinates(
+        routeId: String,
+        waypointId: String,
+        latitude: Double,
+        longitude: Double,
+    ): Int {
+        if (routeState.value.none { it.id == routeId }) return 0
+        return waypointDao.updatePosition(routeId, waypointId, latitude, longitude)
+    }
+
+    override suspend fun updateRouteTimestamp(
+        routeId: String,
+        updatedAt: Long,
+    ): Int {
+        if (routeState.value.none { it.id == routeId }) return 0
+        routeState.value = routeState.value.map { if (it.id == routeId) it.copy(updatedAt = updatedAt) else it }
+        return 1
+    }
+
     override suspend fun updateWaitSeconds(
         waypointId: String,
         waitSeconds: Int,

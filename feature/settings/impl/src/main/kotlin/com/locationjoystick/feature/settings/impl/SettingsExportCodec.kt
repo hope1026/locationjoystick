@@ -170,6 +170,7 @@ internal object SettingsExportCodec {
         root.put("routesSortNewestFirst", data.routesSortNewestFirst)
         root.put("favoritesSortNewestFirst", data.favoritesSortNewestFirst)
         root.put("routesSortMode", data.routesSortMode.name)
+        root.put("customRouteOrder", JSONArray(data.customRouteOrder.filter { it.isNotBlank() }.distinct()))
         root.put("favoritesSortMode", data.favoritesSortMode.name)
         data.homeFavoriteId?.let { root.put("homeFavoriteId", it) }
 
@@ -452,7 +453,9 @@ internal object SettingsExportCodec {
                 parseSavedItemSortMode(
                     root.optString("favoritesSortMode"),
                     root.optBoolean("favoritesSortNewestFirst", true),
+                    allowCustom = false,
                 ),
+            customRouteOrder = parseCustomRouteOrder(root),
             homeFavoriteId = if (root.isNull("homeFavoriteId")) null else root.optString("homeFavoriteId").ifBlank { null },
         )
     }
@@ -461,10 +464,12 @@ internal object SettingsExportCodec {
 private fun parseSavedItemSortMode(
     raw: String,
     legacyNewestFirst: Boolean,
+    allowCustom: Boolean = true,
 ): com.locationjoystick.core.model.SavedItemSortMode =
     runCatching {
         com.locationjoystick.core.model.SavedItemSortMode
             .valueOf(raw)
+            .also { require(allowCustom || it != com.locationjoystick.core.model.SavedItemSortMode.CUSTOM) }
     }.getOrDefault(
         if (legacyNewestFirst) {
             com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST
@@ -472,3 +477,14 @@ private fun parseSavedItemSortMode(
             com.locationjoystick.core.model.SavedItemSortMode.OLDEST_FIRST
         },
     )
+
+private fun parseCustomRouteOrder(root: JSONObject): List<String> {
+    if (!root.has("customRouteOrder") || root.isNull("customRouteOrder")) return emptyList()
+    val array = root.getJSONArray("customRouteOrder")
+    return (0 until array.length())
+        .map { index ->
+            val id = array.get(index) as? String ?: error("Custom route order must contain route IDs")
+            require(id.isNotBlank()) { "Custom route order contains an empty route ID" }
+            id
+        }.distinct()
+}

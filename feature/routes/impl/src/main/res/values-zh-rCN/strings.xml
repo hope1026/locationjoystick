@@ -15,6 +15,13 @@
     <string name="route_detail_speed_profile">"速度预设"</string>
     <string name="route_detail_waypoints">"途经点"</string>
     <string name="route_detail_remove_waypoint_cd">"移除途经点"</string>
+    <string name="route_detail_edit_waypoint_cd">编辑途经点 %1$d</string>
+    <string name="route_waypoint_edit_hint">在地图上点选此途经点的新位置。</string>
+    <string name="route_waypoint_edit_save_error">无法保存此途经点，请重试。</string>
+    <string name="route_waypoint_edit_saving">正在保存…</string>
+    <string name="route_waypoint_edit_map_cd">途经点位置地图</string>
+    <string name="route_waypoint_edit_map_ready">地图已就绪</string>
+    <string name="route_waypoint_edit_map_loading">正在加载地图</string>
     <string name="route_detail_speed_profile_none">"无"</string>
     <string name="route_detail_waypoint_number">"途经点 %1$d"</string>
     <string name="route_detail_wait_seconds">"在此等待：%1$d 秒"</string>

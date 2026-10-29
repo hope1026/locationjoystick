@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="group_qr_scanner_point_at_the_leader_s_group">리더의 그룹 QR 코드를 비춰 주세요</string>
+    <string name="group_qr_scanner_camera_permission_required_to_scan_qr">QR 코드를 스캔하려면 카메라 권한이 필요합니다.</string>
+    <string name="group_qr_scanner_back_cd">뒤로</string>
+    <string name="group_sync_group_sync">그룹 동기화</string>
+    <string name="group_sync_sync_your_fake_location_across_multiple">같은 Wi-Fi에 연결된 여러 기기의 모의 위치를 동기화합니다. 계정은 필요하지 않습니다.</string>
+    <string name="group_sync_create_group_i_m_the_leader">리더로 그룹 만들기</string>
+    <string name="group_sync_or_join_an_existing_group">— 또는 기존 그룹에 참여 —</string>
+    <string name="group_sync_scan_qr">QR 스캔</string>
+    <string name="group_sync_enter_code">코드 입력</string>
+    <string name="group_sync_enter_group_code">그룹 코드 입력</string>
+    <string name="group_sync_ask_the_leader_for_their_6">리더에게 6자리 그룹 코드를 요청하세요.</string>
+    <string name="group_sync_code">코드</string>
+    <string name="group_sync_join">참여</string>
+    <string name="group_sync_cancel">취소</string>
+    <string name="group_sync_role_leader">역할: 리더</string>
+    <string name="group_sync_group_code">그룹 코드</string>
+    <string name="group_sync_followers_can_scan_the_qr_or">참여 기기에서 QR 코드를 스캔하거나 이 코드를 입력하세요</string>
+    <string name="group_sync_group_invite_qr_code_cd">그룹 초대 QR 코드</string>
+    <string name="group_sync_scan_to_join">스캔하여 참여</string>
+    <string name="group_sync_regenerate_qr_cd">QR 코드 다시 생성</string>
+    <string name="group_sync_leave_group">그룹 나가기</string>
+    <string name="group_sync_role_follower">역할: 참여 기기</string>
+    <string name="group_sync_follower_mode_resumes_when_you_open">재부팅 후 앱을 열면 참여 기기 모드가 다시 시작됩니다.</string>
+    <string name="group_sync_teleport_to_leader_now">지금 리더 위치로 순간 이동</string>
+    <string name="group_sync_leave_group_2">그룹 나가기</string>
+    <string name="group_sync_leader_position_not_yet_known">아직 리더 위치를 확인하지 못했습니다. 잠시 후 다시 시도하세요</string>
+    <string name="group_sync_disconnected_from_group">리더에 연결할 수 없어 그룹 연결이 끊어졌습니다</string>
+    <string name="group_sync_code_must_be_characters">코드는 %1$d자리여야 합니다</string>
+    <string name="group_sync_no_group_found_for_code">코드 %1$s에 해당하는 그룹이 없습니다</string>
+    <string name="group_sync_invalid_group_qr_code">유효하지 않은 그룹 QR 코드입니다</string>
+    <string name="group_sync_unknown">알 수 없음</string>
+    <string name="group_sync_sharing">위치 공유</string>
+    <string name="group_sync_sends_your_location_to_followers">참여 기기에 내 위치를 보냅니다.</string>
+    <string name="group_sync_follow_leader">리더 따라가기</string>
+    <string name="group_sync_follow_leader_teleports">리더의 순간 이동 따라가기</string>
+    <string name="group_sync_follow_leader_teleports_description">리더가 순간 이동하면 같은 위치로 이동합니다. 끄면 걸어서 따라갑니다.</string>
+    <string name="group_sync_walks_toward_the_leaders_location">리더의 위치를 향해 걸어갑니다.</string>
+    <string name="group_sync_connected_to_group">그룹 %1$s에 연결됨</string>
+    <plurals name="group_sync_followers_connected">
+        <item quantity="one">%1$d대의 참여 기기 연결됨</item>
+        <item quantity="other">%1$d대의 참여 기기 연결됨</item>
+    </plurals>
+    <plurals name="group_sync_followers_in_group">
+        <item quantity="one">그룹에 참여 기기 %1$d대</item>
+        <item quantity="other">그룹에 참여 기기 %1$d대</item>
+    </plurals>
+    <string name="group_sync_control_api">제어 API</string>
+    <string name="group_sync_control_api_description">같은 Wi-Fi에 있는 다른 앱이 키를 사용해 이 기기를 제어할 수 있습니다.</string>
+    <string name="group_sync_api_host">호스트</string>
+    <string name="group_sync_api_port">포트</string>
+    <string name="group_sync_api_key">API 키</string>
+    <string name="group_sync_api_copy_cd">%1$s 복사</string>
+    <string name="group_sync_api_regenerate_key">키 다시 생성</string>
+    <string name="group_sync_api_warning">같은 Wi-Fi에서 이 키를 아는 사람은 누구나 내 위치를 제어할 수 있습니다. 연결은 암호화되지 않습니다.</string>
+</resources>

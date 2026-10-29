@@ -396,6 +396,7 @@ class MapControllerWalkCancellationTest {
             mockk<SettingsRepository>(relaxed = true) {
                 every { getActiveSpeedProfile() } returns flowOf(walkProfile)
                 every { getRoutesSortMode() } returns flowOf(SavedItemSortMode.NEWEST_FIRST)
+                every { getCustomRouteOrder() } returns flowOf(emptyList())
                 every { getFavoritesSortMode() } returns flowOf(SavedItemSortMode.NEWEST_FIRST)
                 every { getHomeFavoriteId() } returns flowOf(null)
                 every { getSpeedUnit() } returns flowOf(SpeedUnit.KMH)

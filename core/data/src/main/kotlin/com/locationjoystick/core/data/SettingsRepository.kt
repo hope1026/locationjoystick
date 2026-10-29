@@ -282,6 +282,12 @@ class SettingsRepository
 
         suspend fun setRoutesSortMode(mode: com.locationjoystick.core.model.SavedItemSortMode) = dataSource.setRoutesSortMode(mode)
 
+        fun getCustomRouteOrder(): Flow<List<String>> = dataSource.getCustomRouteOrder()
+
+        suspend fun setCustomRouteOrder(ids: List<String>) = dataSource.setCustomRouteOrder(ids)
+
+        suspend fun enableCustomRouteOrder(initialIds: List<String>) = dataSource.enableCustomRouteOrder(initialIds)
+
         fun getFavoritesSortMode() = dataSource.getFavoritesSortMode()
 
         suspend fun setFavoritesSortMode(mode: com.locationjoystick.core.model.SavedItemSortMode) = dataSource.setFavoritesSortMode(mode)

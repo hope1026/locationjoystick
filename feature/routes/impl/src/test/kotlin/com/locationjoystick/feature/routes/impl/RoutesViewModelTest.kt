@@ -15,6 +15,7 @@ import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.Waypoint
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -43,6 +44,7 @@ class RoutesViewModelUiStateTest {
     private val context: Context = mockk(relaxed = true)
     private val routesFlow = MutableStateFlow<List<Route>>(emptyList())
     private val sortFlow = MutableStateFlow(SavedItemSortMode.NEWEST_FIRST)
+    private val customOrderFlow = MutableStateFlow<List<String>>(emptyList())
     private lateinit var viewModel: RoutesViewModel
 
     @Before
@@ -50,6 +52,7 @@ class RoutesViewModelUiStateTest {
         Dispatchers.setMain(testDispatcher)
         every { routeRepository.getRoutes() } returns routesFlow
         every { settingsRepository.getRoutesSortMode() } returns sortFlow
+        every { settingsRepository.getCustomRouteOrder() } returns customOrderFlow
         every { settingsRepository.getHideTeleportFeatures() } returns MutableStateFlow(false)
         viewModel =
             RoutesViewModel(
@@ -66,6 +69,46 @@ class RoutesViewModelUiStateTest {
     fun teardown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun custom_mode_uses_persisted_route_ids() =
+        runTest {
+            routesFlow.value = listOf(route("a", "Alpha", 1L), route("b", "Bravo", 2L))
+            customOrderFlow.value = listOf("b", "a")
+            sortFlow.value = SavedItemSortMode.CUSTOM
+            viewModel.uiState.test {
+                assertEquals(listOf("b", "a"), awaitItem().routes.map { it.id })
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun first_custom_selection_uses_the_visible_order() =
+        runTest {
+            routesFlow.value = listOf(route("a", "Alpha", 1L), route("b", "Bravo", 2L))
+            viewModel.uiState.test {
+                assertEquals(listOf("b", "a"), awaitItem().routes.map { it.id })
+                viewModel.setSortMode(SavedItemSortMode.CUSTOM)
+                coVerify { settingsRepository.enableCustomRouteOrder(listOf("b", "a")) }
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun saving_order_drops_deleted_ids_and_keeps_new_routes() =
+        runTest {
+            routesFlow.value = listOf(route("a", "Alpha", 1L), route("b", "Bravo", 2L), route("new", "New", 3L))
+            assertTrue(viewModel.saveCustomOrder(listOf("b", "deleted", "a", "b")))
+            coVerify { settingsRepository.setCustomRouteOrder(listOf("b", "a", "new")) }
+        }
+
+    @Test
+    fun saving_order_failure_returns_false_for_ui_rollback() =
+        runTest {
+            routesFlow.value = listOf(route("a", "Alpha", 1L))
+            coEvery { settingsRepository.setCustomRouteOrder(any()) } throws IllegalStateException("storage unavailable")
+            assertFalse(viewModel.saveCustomOrder(listOf("a")))
+        }
 
     @Test
     fun uiState_emits_empty_routes_initially() =

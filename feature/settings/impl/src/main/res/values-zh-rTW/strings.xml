@@ -64,7 +64,7 @@
     <string name="settings_gps_section_realistic_satellite_count">"真實衛星數量"</string>
     <string name="settings_gps_section_realistic_satellite_count_desc">"每次位置更新皆附帶衛星中繼資料（可見 7–14 顆、參與定位 6–12 顆），而不是 0 顆。部分應用程式會將衛星數為 0 視為模擬定位的特徵。"</string>
     <string name="settings_gps_section_simulate_signal_dropouts">"模擬訊號中斷"</string>
-    <string name="settings_gps_section_simulate_signal_dropouts_desc">"每隔約 10 秒短暫中斷一次模擬位置訊號，類似真實 GPS 偶爾遺失訊號。預設關閉 — 中斷會導致大多數應用程式出現明顯延遲。路線重播期間會自動略過。"</string>
+    <string name="settings_gps_section_simulate_signal_dropouts_desc">定期回報零速度並暫停位置擾動，但仍持續更新位置。預設關閉，路線重播和步行前往目標期間不生效。</string>
     <string name="settings_gps_location_memory">"位置記憶"</string>
     <string name="settings_gps_controls_whether_the_app_remembers_where">"控制應用程式重新開啟時是否記住上次使用的位置。"</string>
     <string name="settings_gps_speed_profiles">"速度預設"</string>

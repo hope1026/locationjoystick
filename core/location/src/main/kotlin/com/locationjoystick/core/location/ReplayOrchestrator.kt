@@ -193,7 +193,7 @@ internal class ReplayOrchestrator(
                 walkToPosition(returnPosition, speedMs, state = state)
             }
             finishReplay()
-            locationRepository.emitCompletion("Route complete")
+            locationRepository.emitCompletion(context.getString(R.string.route_complete_message))
         }
 
     fun handleEphemeralStart(
@@ -266,14 +266,14 @@ internal class ReplayOrchestrator(
                 routeReplayEngine
                     .jumpToNextWaypoint(::tickPosition) {
                         finishReplay()
-                        locationRepository.emitCompletion("Route complete")
+                        locationRepository.emitCompletion(context.getString(R.string.route_complete_message))
                     }?.let(::tickPosition)
             }
             activeReplayer.resume(
                 onPositionUpdate = ::tickReplayPosition,
                 onComplete = {
                     finishReplay()
-                    locationRepository.emitCompletion("Route complete")
+                    locationRepository.emitCompletion(context.getString(R.string.route_complete_message))
                 },
             )
             publishProgress()
@@ -301,7 +301,7 @@ internal class ReplayOrchestrator(
         if (locationRepository.currentMode.value != MockMode.ROUTE_REPLAY) return
         val onReplayComplete: () -> Unit = {
             finishReplay()
-            locationRepository.emitCompletion("Route complete")
+            locationRepository.emitCompletion(context.getString(R.string.route_complete_message))
         }
         val target =
             if (forward) {
@@ -452,7 +452,7 @@ internal class ReplayOrchestrator(
         persistMetadata: (suspend () -> Unit)? = null,
         onComplete: suspend () -> Unit = {
             finishReplay()
-            locationRepository.emitCompletion("Route complete")
+            locationRepository.emitCompletion(context.getString(R.string.route_complete_message))
         },
     ) {
         if (!isStartStillCurrent(state.generation)) return
@@ -510,7 +510,7 @@ internal class ReplayOrchestrator(
         persistMetadata: (suspend () -> Unit)? = null,
         onComplete: suspend () -> Unit = {
             finishReplay()
-            locationRepository.emitCompletion("Route complete")
+            locationRepository.emitCompletion(context.getString(R.string.route_complete_message))
         },
     ) {
         startReplaySetup(

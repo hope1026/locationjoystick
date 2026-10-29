@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.settings.impl
 
 import android.app.Activity
+import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -46,10 +47,13 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.DestinationCardSpec
 import com.locationjoystick.core.designsystem.component.DestinationHub
+import com.locationjoystick.core.designsystem.component.LjLanguageDialog
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjOverflowMenuSectionLabel
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.appLanguageDisplayName
 import com.locationjoystick.core.location.rememberSpoofToggleState
+import com.locationjoystick.core.model.AppLanguage
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.feature.settings.impl.R
 
@@ -452,7 +456,9 @@ fun SettingsRoute(
 
                 is SettingsAction.SetLanguage -> {
                     viewModel.setLanguage(action.tag)
-                    (context as? Activity)?.recreate()
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                        (context as? Activity)?.recreate()
+                    }
                 }
 
                 SettingsAction.Export -> {
@@ -603,6 +609,7 @@ internal fun SettingsScreen(
         null -> {
             SettingsHubScreen(
                 uiState = uiState,
+                languageTag = languageTag,
                 onOpenDrawer = onOpenDrawer,
                 onNavigate = { currentSection = it },
                 isSpoofing = isSpoofing,
@@ -680,6 +687,7 @@ internal fun SettingsScreen(
 @Composable
 private fun SettingsHubScreen(
     uiState: SettingsUiState,
+    languageTag: String?,
     onOpenDrawer: () -> Unit,
     onNavigate: (SettingsSection) -> Unit,
     isSpoofing: Boolean,
@@ -689,6 +697,17 @@ private fun SettingsHubScreen(
     bottomBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
 ) {
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    if (showLanguageDialog) {
+        LjLanguageDialog(
+            selected = AppLanguage.fromTag(languageTag),
+            onSelect = { language ->
+                showLanguageDialog = false
+                onAction(SettingsAction.SetLanguage(language.languageTag))
+            },
+            onDismiss = { showLanguageDialog = false },
+        )
+    }
     LjScaffold(
         title = stringResource(R.string.settings_hub_settings),
         isSpoofing = isSpoofing,
@@ -767,6 +786,12 @@ private fun SettingsHubScreen(
             paddingValues = paddingValues,
             cards =
                 listOf(
+                    DestinationCardSpec(
+                        icon = LjIcons.Translate,
+                        title = stringResource(com.locationjoystick.core.designsystem.R.string.language_app_label),
+                        description = appLanguageDisplayName(AppLanguage.fromTag(languageTag)),
+                        onClick = { showLanguageDialog = true },
+                    ),
                     DestinationCardSpec(
                         icon = LjIcons.Speed,
                         title = stringResource(R.string.settings_hub_movement_and_gps),

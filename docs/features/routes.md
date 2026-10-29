@@ -22,6 +22,14 @@ Pending GPX is a `StateFlow` held until the user dismisses or uses the paste she
 
 The overflow menu on each saved route is **Edit**, **Share**, **Export**, **Delete**. Share opens a dialog with the route's waypoints as paste-format `lat, lon` lines, with Copy and Send as message. Add actions live on a FAB that opens an action sheet (**Draw on map**, **Draw on map (follow roads)**, **Paste coordinates**, **Import GPX file**).
 
+## Editing saved waypoint positions
+
+Route Details gives each waypoint an **Edit waypoint** action, for straight, guided, and teleport routes. It opens a full-screen map centered on the saved point, with the route for context and a marker for the selected position. Tapping the map changes a draft position. **Save** updates only that waypoint's latitude and longitude; **Cancel** or Back discards the draft.
+
+The coordinate update is scoped to the route ID and waypoint ID. It preserves waypoint identity, order, wait duration, all other waypoints, and route name, type, and speed profile. A missing waypoint or route mismatch fails instead of inserting a replacement. The parent route's `updatedAt` changes when the position is saved. An unsaved route-name draft and the waypoint list's scroll position remain when returning from the map.
+
+Save and navigation controls are disabled while the write is in progress. A failed save leaves the map open with an error and the draft position available for retry. Editing a saved point does not teleport the current simulated position or rewrite an active replay's loaded path. Start the route again to use the changed saved coordinates.
+
 ## List search
 
 A search field at the top of the Routes screen filters by route name (case-insensitive substring
@@ -36,9 +44,29 @@ Rename, Delete, and Share. Share sends the route's paste-format coordinate seque
 overlay before launching the system chooser so the chooser cannot be covered.
 
 The Sort menu is shared by the main Routes screen and widget routes panel. It offers **A–Z**,
-**Z–A**, **Newest saved**, and **Oldest saved**. The saved-time choices use `createdAt`, so they
+**Z–A**, **Newest saved**, **Oldest saved**, and **Custom order**. The saved-time choices use `createdAt`, so they
 preserve the order in which routes were added in either direction. The selected mode persists and
 also controls route ordering on the map and widget surfaces.
+
+### Custom route order
+
+Choose **Custom order** in the saved Routes list, then press and hold a route's drag handle and
+drag it up or down. Releasing the handle saves the new route-ID sequence. Dragging is available
+only in the main Routes list, with an empty search query; a filtered list shows the clear-search
+hint instead of allowing hidden routes to be reordered accidentally.
+
+The first selection of Custom order captures the current displayed order when no custom sequence
+has been saved. Returning to Custom order restores the saved sequence. Choosing a name or
+saved-time sort does not overwrite it. Renaming a route leaves its custom position unchanged.
+New routes absent from the sequence append after known routes, ordered by `createdAt` then ID.
+Deleted or stale IDs are ignored, duplicate IDs use their first position, and the next reorder
+save reconciles the sequence with the existing routes.
+
+`SavedItemSortMode.CUSTOM` is route-only. Favorites keep their four existing sort choices.
+`customRouteOrder` stores route IDs in DataStore and is included in export/import. The map's
+route sheet and floating widget display the same custom ordering; the widget's Custom order
+choice restores it, while drag editing remains in the main list. Reordering this list changes
+display order only, not a route's waypoints, metadata, or active replay path.
 
 ## Paste coordinates
 

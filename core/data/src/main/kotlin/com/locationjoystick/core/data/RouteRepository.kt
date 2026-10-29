@@ -142,6 +142,34 @@ class RouteRepository
                 }
             }
 
+        /** Moves an existing waypoint while preserving its identity, order, wait time, and route settings. */
+        suspend fun updateWaypointPosition(
+            routeId: String,
+            waypointId: String,
+            position: LatLng,
+        ): Result<Unit> =
+            withContext(ioDispatcher) {
+                runCatching {
+                    require(position.latitude.isFinite() && position.latitude in -90.0..90.0) {
+                        "Latitude must be finite and between -90 and 90"
+                    }
+                    require(position.longitude.isFinite() && position.longitude in -180.0..180.0) {
+                        "Longitude must be finite and between -180 and 180"
+                    }
+                    check(
+                        routeDao.updateWaypointPosition(
+                            routeId = routeId,
+                            waypointId = waypointId,
+                            latitude = position.latitude,
+                            longitude = position.longitude,
+                            updatedAt = System.currentTimeMillis(),
+                        ),
+                    ) { "Waypoint no longer exists in this route" }
+                }.onFailure { error ->
+                    Log.e(TAG, "Failed to update waypoint position: $waypointId in $routeId", error)
+                }
+            }
+
         suspend fun setWaypointWaitSeconds(
             waypointId: String,
             waitSeconds: Int,

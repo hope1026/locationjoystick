@@ -19,13 +19,14 @@ import com.locationjoystick.core.model.SavedItemSortMode
 fun SavedItemSortMenu(
     selected: SavedItemSortMode,
     onSelected: (SavedItemSortMode) -> Unit,
+    includeCustom: Boolean = false,
 ) {
     var expanded by remember { mutableStateOf(false) }
     IconButton(onClick = { expanded = true }) {
         Icon(LjIcons.SwapVert, contentDescription = stringResource(R.string.saved_item_sort_menu_sort))
     }
     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-        SavedItemSortMode.entries.forEach { mode ->
+        SavedItemSortMode.entries.filter { includeCustom || it != SavedItemSortMode.CUSTOM }.forEach { mode ->
             DropdownMenuItem(
                 text = { Text(mode.label) },
                 leadingIcon = {
@@ -48,4 +49,5 @@ private val SavedItemSortMode.label: String
             SavedItemSortMode.NAME_DESCENDING -> stringResource(R.string.saved_sort_name_descending)
             SavedItemSortMode.NEWEST_FIRST -> stringResource(R.string.saved_sort_newest)
             SavedItemSortMode.OLDEST_FIRST -> stringResource(R.string.saved_sort_oldest)
+            SavedItemSortMode.CUSTOM -> stringResource(R.string.saved_sort_custom)
         }

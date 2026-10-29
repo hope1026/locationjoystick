@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.Context
 import android.os.Build
 import androidx.test.runner.AndroidJUnitRunner
+import com.locationjoystick.core.common.util.LocaleContextWrapper
 import dagger.hilt.android.testing.HiltTestApplication
 
 class HiltTestRunner : AndroidJUnitRunner() {
@@ -39,6 +40,8 @@ class HiltTestRunner : AndroidJUnitRunner() {
                     "pm grant $pkg ${Manifest.permission.POST_NOTIFICATIONS}",
                 ).close()
         }
+        // Smoke tests use English selectors; locale-switch tests explicitly change it through Settings.
+        LocaleContextWrapper.setLanguage(targetContext, "en")
         super.onStart()
     }
 }

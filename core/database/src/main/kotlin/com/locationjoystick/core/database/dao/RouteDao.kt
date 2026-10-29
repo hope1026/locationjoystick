@@ -72,6 +72,38 @@ interface RouteDao {
     @Query("DELETE FROM waypoints WHERE id = :waypointId")
     suspend fun deleteWaypointById(waypointId: String)
 
+    @Query(
+        "UPDATE waypoints SET latitude = :latitude, longitude = :longitude " +
+            "WHERE id = :waypointId AND routeId = :routeId " +
+            "AND EXISTS (SELECT 1 FROM routes WHERE id = :routeId)",
+    )
+    suspend fun updateWaypointCoordinates(
+        routeId: String,
+        waypointId: String,
+        latitude: Double,
+        longitude: Double,
+    ): Int
+
+    @Query("UPDATE routes SET updatedAt = :updatedAt WHERE id = :routeId")
+    suspend fun updateRouteTimestamp(
+        routeId: String,
+        updatedAt: Long,
+    ): Int
+
+    /** Updates one existing point and its route timestamp without replacing either row. */
+    @Transaction
+    suspend fun updateWaypointPosition(
+        routeId: String,
+        waypointId: String,
+        latitude: Double,
+        longitude: Double,
+        updatedAt: Long,
+    ): Boolean {
+        if (updateWaypointCoordinates(routeId, waypointId, latitude, longitude) != 1) return false
+        check(updateRouteTimestamp(routeId, updatedAt) == 1) { "Waypoint route no longer exists" }
+        return true
+    }
+
     @Query("UPDATE waypoints SET waitSeconds = :waitSeconds WHERE id = :waypointId")
     suspend fun updateWaitSeconds(
         waypointId: String,

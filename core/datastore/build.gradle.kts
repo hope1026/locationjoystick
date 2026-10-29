@@ -5,6 +5,9 @@ plugins {
 
 android {
     namespace = "com.locationjoystick.core.datastore"
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -15,4 +18,5 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(project(":core:testing"))
+    testImplementation(libs.orgjson)
 }

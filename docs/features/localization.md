@@ -12,6 +12,7 @@ Key files: `core/common/util/LocaleContextWrapper.kt`, `core/common/constants/Ap
 | Locale | Qualifier |
 |---|---|
 | English (default/source) | `values/` |
+| Korean | `values-ko/` |
 | Simplified Chinese | `values-zh-rCN/` |
 | Traditional Chinese | `values-zh-rTW/` |
 
@@ -39,16 +40,21 @@ Cooldown advisory/badge text lives in `core/designsystem`'s `cooldown_strings.xm
   `LocaleContextWrapper.wrap()` (`:core:common`) supports an app-chosen override on this range via
   `attachBaseContext()` in `MainActivity`, `OverlayService` (the joystick and widget overlay base
   class), and `MockLocationService` (the foreground service and its notification).
-- **In-app language picker**: a compact top-right dropdown switcher (`LjLanguageDropdown`,
-  `:core:designsystem`) sits in the top bar's `actions` slot in two places — onboarding's header
-  (optional, skippable, does not count toward "Step X of 3") and the Settings → Menus screen's top
-  bar. Choices are "EN" / "CN" / "TW" / "System default" (abbreviated language codes, spelled-out
-  fallback option). Selecting a language calls
-  `LocaleContextWrapper.setLanguage()` (`:core:common`) — on API 33+, the platform's own
-  `LocaleManager.setApplicationLocales`; on API 28-32, writes `LocaleConstants.KEY_LANGUAGE_TAG`
-  to the same SharedPreferences file `LocaleContextWrapper.wrap()` reads — then calls
-  `Activity.recreate()` so `MainActivity` picks it up immediately. Persisted per-device, not part
-  of `AppSettings`/`ExportData` (like `ThemeMode`).
+- **Settings language dialog**: Settings → **App language** opens a radio-choice dialog.
+  It includes **한국어**, **English**, **简体中文**, **繁體中文**, and **System default**. Language
+  names use their native spelling so a user can recover from an unfamiliar display language.
+  The selection applies immediately and persists per device, not in `AppSettings`/`ExportData`
+  (like `ThemeMode`). Choosing Korean uses the `ko` language tag and each module's `values-ko`
+  resources; English continues to use the source resources.
+- **Compact language picker**: the existing `LjLanguageDropdown` (`:core:designsystem`) remains
+  in onboarding's optional header and the Settings → Menus top bar. Its menu uses the same native
+  language names. The selected button remains compact: **EN**, **KO**, **CN**, **TW**, or the
+  localized system-default label. The onboarding picker does not count toward "Step X of 3".
+- **Applying a selection**: `LocaleContextWrapper.setLanguage()` uses the platform's own
+  `LocaleManager.setApplicationLocales` on API 33+, which applies the configuration change and
+  recreates the activity automatically. On API 28-32, it writes `LocaleConstants.KEY_LANGUAGE_TAG`
+  to the SharedPreferences file read by `LocaleContextWrapper.wrap()`; the caller explicitly
+  recreates the activity on this legacy path only. Neither picker requires saving other settings.
 - **Android 9-12 (API 28-32) limitation**: the SharedPreferences override above only takes effect
   for a component the next time it's created (`attachBaseContext()` runs once per instance). A
   language change made while a spoofing session is actively running won't retroactively relabel

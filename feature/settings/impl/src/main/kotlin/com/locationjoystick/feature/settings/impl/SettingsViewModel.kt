@@ -594,6 +594,7 @@ class SettingsViewModel
                             driveSpeedMs = state.speeds.getValue("drive"),
                             speedUnit = state.speedUnit,
                             featureOrder = state.featureOrder,
+                            customRouteOrder = settingsRepository.getCustomRouteOrder().first(),
                             enabledWidgetFeatures = state.enabledWidgetFeatures,
                             enabledMapFeatures = state.enabledMapFeatures,
                             enabledSpeedProfileIds = state.enabledSpeedProfileIds,
@@ -746,6 +747,7 @@ class SettingsViewModel
                 favoritesSortNewestFirst = settingsRepository.getFavoritesSortNewestFirst().first(),
                 homeFavoriteId = settingsRepository.getHomeFavoriteId().first(),
                 routesSortMode = settingsRepository.getRoutesSortMode().first(),
+                customRouteOrder = settingsRepository.getCustomRouteOrder().first(),
                 favoritesSortMode = settingsRepository.getFavoritesSortMode().first(),
             )
         }
@@ -919,6 +921,7 @@ class SettingsViewModel
                     mapTileSource = data.settings.mapTileSource,
                     disabledGeocodingProviders = data.settings.disabledGeocodingProviders,
                     featureOrder = data.settings.featureOrder,
+                    customRouteOrder = data.customRouteOrder,
                     enabledWidgetFeatures = data.settings.enabledWidgetFeatures,
                     enabledMapFeatures = data.settings.enabledMapFeatures,
                     enabledSpeedProfileIds = data.settings.enabledSpeedProfileIds,

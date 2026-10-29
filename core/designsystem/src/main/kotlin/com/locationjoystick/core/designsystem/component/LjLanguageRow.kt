@@ -2,15 +2,22 @@ package com.locationjoystick.core.designsystem.component
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,8 +26,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSpacing
@@ -70,7 +79,7 @@ fun LjLanguageDropdown(
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             AppLanguage.entries.forEach { language ->
                 DropdownMenuItem(
-                    text = { Text(appLanguageShortLabel(language)) },
+                    text = { Text(appLanguageDisplayName(language)) },
                     onClick = {
                         expanded = false
                         onSelect(language)
@@ -86,6 +95,56 @@ private fun appLanguageShortLabel(language: AppLanguage): String =
     when (language) {
         AppLanguage.SYSTEM_DEFAULT -> stringResource(R.string.language_system_default)
         AppLanguage.ENGLISH -> stringResource(R.string.language_short_english)
+        AppLanguage.KOREAN -> stringResource(R.string.language_short_korean)
         AppLanguage.CHINESE_SIMPLIFIED -> stringResource(R.string.language_short_chinese)
         AppLanguage.CHINESE_TRADITIONAL -> stringResource(R.string.language_short_traditional_chinese)
     }
+
+/** Native names stay recognizable after switching the rest of the interface. */
+@Composable
+fun appLanguageDisplayName(language: AppLanguage): String =
+    when (language) {
+        AppLanguage.SYSTEM_DEFAULT -> stringResource(R.string.language_system_default)
+        AppLanguage.ENGLISH -> stringResource(R.string.language_name_english)
+        AppLanguage.KOREAN -> stringResource(R.string.language_name_korean)
+        AppLanguage.CHINESE_SIMPLIFIED -> stringResource(R.string.language_name_chinese)
+        AppLanguage.CHINESE_TRADITIONAL -> stringResource(R.string.language_name_traditional_chinese)
+    }
+
+@Composable
+fun LjLanguageDialog(
+    selected: AppLanguage,
+    onSelect: (AppLanguage) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.language_app_label)) },
+        text = {
+            Column(Modifier.selectableGroup()) {
+                AppLanguage.entries.forEach { language ->
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .selectable(selected == language, role = Role.RadioButton, onClick = { onSelect(language) })
+                                .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = selected == language, onClick = null)
+                        Text(appLanguageDisplayName(language), modifier = Modifier.padding(start = 12.dp))
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+        },
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LanguageDialogPreview() {
+    LjLanguageDialog(selected = AppLanguage.KOREAN, onSelect = {}, onDismiss = {})
+}

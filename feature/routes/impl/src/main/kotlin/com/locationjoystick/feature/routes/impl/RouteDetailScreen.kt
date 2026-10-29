@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +57,8 @@ import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.speedProfileLabel
 import com.locationjoystick.core.location.rememberSpoofToggleState
+import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.SpeedProfile
@@ -96,6 +100,18 @@ class RouteDetailViewModel
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = emptyList(),
             )
+
+        val mapTileSource: StateFlow<MapTileSource> =
+            settingsRepository.getMapTileSource().stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = MapTileSource.DEFAULT,
+            )
+
+        suspend fun updateWaypointPosition(
+            waypointId: String,
+            position: LatLng,
+        ): Boolean = routeRepository.updateWaypointPosition(routeId, waypointId, position).isSuccess
 
         private val _nameError = MutableStateFlow(false)
         val nameError: StateFlow<Boolean> = _nameError.asStateFlow()
@@ -197,19 +213,42 @@ fun RouteDetailScreen(
     val route by viewModel.route.collectAsStateWithLifecycle()
     val nameError by viewModel.nameError.collectAsStateWithLifecycle()
     val speedProfiles by viewModel.speedProfiles.collectAsStateWithLifecycle()
+    val mapTileSource by viewModel.mapTileSource.collectAsStateWithLifecycle()
     val spoofToggle = rememberSpoofToggleState()
     val coroutineScope = rememberCoroutineScope()
 
-    var editedName by remember { mutableStateOf("") }
-    var isNameInitialized by remember { mutableStateOf(false) }
+    var editedName by rememberSaveable(routeId) { mutableStateOf("") }
+    var isNameInitialized by rememberSaveable(routeId) { mutableStateOf(false) }
     var editingWaypointId by remember { mutableStateOf<String?>(null) }
+    var positionEditingWaypointId by rememberSaveable(routeId) { mutableStateOf<String?>(null) }
     var isSettingAllWait by remember { mutableStateOf(false) }
+    val listState = rememberLazyListState()
 
     LaunchedEffect(route) {
         if (route != null && !isNameInitialized) {
             editedName = route!!.name
             isNameInitialized = true
         }
+    }
+
+    if (positionEditingWaypointId != null && route != null) {
+        // Keep the selected point's identity while the picker is open. A concurrent deletion
+        // must fail its targeted update rather than insert it again or edit another point.
+        val waypoint =
+            remember(positionEditingWaypointId) {
+                route!!.waypoints.find { it.id == positionEditingWaypointId }
+            }
+        if (waypoint != null) {
+            RouteWaypointMapEditor(
+                route = route!!,
+                waypoint = waypoint,
+                tileSource = mapTileSource,
+                onSave = { viewModel.updateWaypointPosition(waypoint.id, it) },
+                onClose = { positionEditingWaypointId = null },
+            )
+            return
+        }
+        LaunchedEffect(positionEditingWaypointId) { positionEditingWaypointId = null }
     }
 
     BackHandler {
@@ -264,6 +303,7 @@ fun RouteDetailScreen(
             } else {
                 val isTeleportRoute = route!!.routeType == RouteType.TELEPORT
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp),
                     contentPadding = PaddingValues(vertical = 16.dp),
@@ -390,10 +430,20 @@ fun RouteDetailScreen(
                     items(route!!.waypoints, key = { it.id }) { waypoint ->
                         LjListItemCard(
                             trailing = {
+                                IconButton(onClick = { positionEditingWaypointId = waypoint.id }) {
+                                    Icon(
+                                        LjIcons.Edit,
+                                        contentDescription =
+                                            stringResource(
+                                                R.string.route_detail_edit_waypoint_cd,
+                                                waypoint.orderIndex + 1,
+                                            ),
+                                    )
+                                }
                                 if (isTeleportRoute) {
                                     IconButton(onClick = { editingWaypointId = waypoint.id }) {
                                         Icon(
-                                            LjIcons.Edit,
+                                            LjIcons.Timer,
                                             contentDescription = stringResource(R.string.route_detail_edit_wait_cd),
                                         )
                                     }

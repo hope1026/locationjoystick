@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
@@ -42,6 +43,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -64,8 +67,10 @@ import com.locationjoystick.core.designsystem.component.WideContentClamp
 import com.locationjoystick.core.designsystem.component.rememberLjSheetState
 import com.locationjoystick.core.designsystem.component.writePlainText
 import com.locationjoystick.core.location.rememberSpoofToggleState
+import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.RouteType
+import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.distanceTo
 import com.locationjoystick.core.model.matchesSearch
 import com.locationjoystick.core.model.startWaypoint
@@ -116,6 +121,7 @@ fun RoutesRoute(
         onResumeReplay = viewModel::resumeReplay,
         onStopReplay = viewModel::stopReplay,
         onSortModeSelected = viewModel::setSortMode,
+        onCustomOrderChanged = viewModel::saveCustomOrder,
         bottomBar = bottomBar,
     )
 }
@@ -164,6 +170,7 @@ internal fun RoutesScreen(
     onToggleSpoofing: () -> Unit = {},
     locationLabel: String? = null,
     onSortModeSelected: (com.locationjoystick.core.model.SavedItemSortMode) -> Unit = {},
+    onCustomOrderChanged: suspend (List<String>) -> Boolean = { true },
     bottomBar: @Composable () -> Unit = {},
 ) {
     var deletingRoute by remember { mutableStateOf<com.locationjoystick.core.model.Route?>(null) }
@@ -180,7 +187,7 @@ internal fun RoutesScreen(
         bottomBar = bottomBar,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         actions = {
-            SavedItemSortMenu(selected = uiState.sortMode, onSelected = onSortModeSelected)
+            SavedItemSortMenu(selected = uiState.sortMode, onSelected = onSortModeSelected, includeCustom = true)
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddOptionsSheet = true }) {
@@ -192,6 +199,33 @@ internal fun RoutesScreen(
             remember(uiState.routes, searchQuery) {
                 uiState.routes.filter { it.matchesSearch(searchQuery) }
             }
+        val routeCard: @Composable (Route, Modifier, Modifier?) -> Unit = { route, modifier, dragHandle ->
+            RouteCard(
+                modifier = modifier,
+                route = route,
+                playbackState = playbackState,
+                onNavigateToEdit = { onNavigateToDetail(route.id) },
+                onDeleteRoute = { deletingRoute = route },
+                onShare = { sharingRoute = route },
+                onExport = { onExportRoute(route) },
+                onStartReplay = onStartReplay,
+                onTeleportToRouteStart = onTeleportToRouteStart,
+                onPauseReplay = onPauseReplay,
+                onResumeReplay = onResumeReplay,
+                onStopReplay = onStopReplay,
+                hideTeleportFeatures = uiState.hideTeleportFeatures,
+                reorderHandle = {
+                    if (dragHandle != null) {
+                        Icon(
+                            LjIcons.DragHandle,
+                            contentDescription = stringResource(R.string.routes_custom_order_drag_cd, route.name),
+                            modifier = dragHandle.size(48.dp).padding(12.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                },
+            )
+        }
         Column(
             modifier =
                 Modifier
@@ -205,6 +239,16 @@ internal fun RoutesScreen(
                         onQueryChange = { searchQuery = it },
                         label = stringResource(R.string.routes_screen_search_routes),
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                }
+                if (uiState.sortMode == SavedItemSortMode.CUSTOM && uiState.routes.isNotEmpty()) {
+                    Text(
+                        stringResource(
+                            if (searchQuery.isBlank()) R.string.routes_custom_order_hint else R.string.routes_custom_order_search_hint,
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                     )
                 }
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -236,30 +280,24 @@ internal fun RoutesScreen(
                         }
 
                         else -> {
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                items(
-                                    items = filteredRoutes,
-                                    key = { it.id },
-                                ) { route ->
-                                    RouteCard(
-                                        modifier = Modifier.animateItem(),
-                                        route = route,
-                                        playbackState = playbackState,
-                                        onNavigateToEdit = { onNavigateToDetail(route.id) },
-                                        onDeleteRoute = { deletingRoute = route },
-                                        onShare = { sharingRoute = route },
-                                        onExport = { onExportRoute(route) },
-                                        onStartReplay = onStartReplay,
-                                        onTeleportToRouteStart = onTeleportToRouteStart,
-                                        onPauseReplay = onPauseReplay,
-                                        onResumeReplay = onResumeReplay,
-                                        onStopReplay = onStopReplay,
-                                        hideTeleportFeatures = uiState.hideTeleportFeatures,
-                                    )
+                            if (uiState.sortMode == SavedItemSortMode.CUSTOM) {
+                                ReorderableRoutesList(
+                                    routes = uiState.routes,
+                                    query = searchQuery,
+                                    onOrderChanged = onCustomOrderChanged,
+                                ) { route, modifier, handle -> routeCard(route, modifier, handle) }
+                            } else {
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = PaddingValues(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    items(
+                                        items = filteredRoutes,
+                                        key = { it.id },
+                                    ) { route ->
+                                        routeCard(route, Modifier.animateItem().testTag("saved_route_${route.id}"), null)
+                                    }
                                 }
                             }
                         }
@@ -360,6 +398,7 @@ private fun RouteCard(
     modifier: Modifier = Modifier,
     hideTeleportFeatures: Boolean = false,
     isRoadRouteFetchInFlight: Boolean = false,
+    reorderHandle: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {},
 ) {
     val isActiveRoute = playbackState.activeRouteId == route.id
     val isPlaying = isActiveRoute && playbackState.isPlaying
@@ -390,6 +429,7 @@ private fun RouteCard(
         modifier = modifier.fillMaxWidth(),
     ) {
         LjListItemCard(
+            leading = reorderHandle,
             trailing = {
                 when {
                     isPlaying -> {
@@ -488,7 +528,7 @@ private fun RouteCard(
             val label = if (distanceText.isNotEmpty()) "${route.name} — $distanceText" else route.name
             Text(label, style = MaterialTheme.typography.titleMedium)
             Text(
-                "${route.waypoints.size} waypoints",
+                pluralStringResource(R.plurals.route_waypoint_count, route.waypoints.size, route.waypoints.size),
                 style = MaterialTheme.typography.bodySmall,
             )
         }

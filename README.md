@@ -27,9 +27,11 @@ See the **[wiki](https://locationjoystick.shrtcts.fr/)** for every feature: the 
 
 - Paste coordinates as a single location or a complete route, and capture locations from shared map links.
 - Search and sort saved favorites and routes; rename, delete, and share them from the widget too.
+- Put saved routes in your own order by dragging them up or down.
 - Use a compact movable widget map with north lock, or expand it for more space.
 - Preview planting circles and spiral roaming, with optional jumps between route stops.
 - See an "update available" badge (checked about once a day) and a "What's new" badge for your current version on the Home screen.
+- Choose Korean, English, or Chinese in **Settings → App language**.
 
 ## Community
 

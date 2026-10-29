@@ -81,6 +81,7 @@ internal fun RoutesFloatingView(
         searchLabel = stringResource(R.string.widget_search_routes),
         sortMode = if (selectedRouteId == null) sortMode else null,
         onSortModeSelected = onSortModeSelected,
+        includeCustomSort = true,
     ) {
         if (selectedRouteId != null) {
             val routeId = selectedRouteId!!

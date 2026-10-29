@@ -25,6 +25,7 @@ fun LjListItemCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     trailing: @Composable RowScope.() -> Unit,
+    leading: @Composable RowScope.() -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -41,6 +42,7 @@ fun LjListItemCard(
                     .padding(start = 16.dp, top = 12.dp, end = 4.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            leading()
             Column(modifier = Modifier.weight(1f)) {
                 content()
             }
