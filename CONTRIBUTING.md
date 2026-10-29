@@ -44,6 +44,31 @@ make test
 
 Fix all lint **error**s before done. Warnings ok; errors not. Never suppress `Errors` rules. Never `@file:Suppress`.
 
+## Collecting location diagnostics
+
+To investigate a jump back to the real location, connect one Android device with USB
+debugging authorized and reproduce the issue while running:
+
+```bash
+python3 scripts/collect-location-diagnostics.py --duration 120 --interval 2
+```
+
+Use `--serial SERIAL` when more than one device is connected. The collector reads device
+and app metadata, streams filtered logs, and takes timestamped location, service,
+and screen-power snapshots. It does not change settings or install, start, or stop the app. Evidence goes
+to a temporary directory by default; `manifest.json` indexes outputs, timings, and errors.
+Raw files include location information and stay local. Use `--output NEW_DIRECTORY` to
+choose a different destination.
+
+Collector checks run without a device:
+
+```bash
+python3 scripts/test_collect_location_diagnostics.py
+```
+
+The initial [Galaxy Note8 investigation](docs/research/2026-10-29-note8-location-snapback.md)
+distinguishes competing location sources from gaps in mock updates.
+
 ## Reference Docs
 
 | Topic | File |
